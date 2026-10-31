@@ -114,15 +114,11 @@ def ensure_embedding_dimensions():
 # ================= HTTP ROUTES =================
 
 @app.get("/")
-def health_check():
-    return {"status": "Success", "message": "FastAPI is running!"}
-
-
 @app.get("/chat")
 def serve_chat():
     if os.path.exists("chat.html"):
         return FileResponse("chat.html")
-    raise HTTPException(status_code=404, detail="chat.html not found")
+    return {"status": "Success", "message": "FastAPI is running!"}
 
 
 # --- THREAD PERSISTENCE ENDPOINTS ---
