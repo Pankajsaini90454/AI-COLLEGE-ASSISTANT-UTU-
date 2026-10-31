@@ -4,17 +4,7 @@ An intelligent RAG (Retrieval-Augmented Generation) assistant for college docume
 
 ---
 
-## 🚀 How to Run Anytime (Without Antigravity)
 
-### Option 1: One-Click Run (Easiest)
-Simply double-click the **`run.bat`** file in this folder.
-- It will ensure your database container is up.
-- Automatically start the FastAPI backend.
-- Automatically open the chat assistant in your default browser at `http://127.0.0.1:8000/chat`.
-
----
-
-### Option 2: Running in VS Code
 1. Open this folder in **VS Code**: `File` -> `Open Folder...` -> Select `AI College Assistant`.
 2. VS Code is pre-configured to automatically use the local virtual environment (`myenv`).
 3. Either:
