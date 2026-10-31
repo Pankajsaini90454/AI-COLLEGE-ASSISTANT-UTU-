@@ -4,7 +4,17 @@ from database import get_db_connection, init_db
 from extractor import extract_text_hybrid
 from chunker import chunk_text
 
-from sentence_transformers import SentenceTransformer
+try:
+    from fastembed import TextEmbedding
+    class LightweightEmbedder:
+        def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+            self._model = TextEmbedding(model_name=model_name)
+        def encode(self, text):
+            if isinstance(text, str):
+                return list(self._model.embed([text]))[0].tolist()
+            return [x.tolist() for x in self._model.embed(text)]
+except Exception:
+    from sentence_transformers import SentenceTransformer
 
 if __name__ == "__main__":
     print("Starting document ingestion process...\n")
@@ -15,7 +25,7 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     print("Loading embedding model (all-MiniLM-L6-v2)...")
-    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    embedding_model = LightweightEmbedder() if "LightweightEmbedder" in globals() else SentenceTransformer("all-MiniLM-L6-v2")
     
     data_folder = "data"
     

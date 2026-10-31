@@ -8,7 +8,6 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
-from sentence_transformers import SentenceTransformer
 
 from database import get_db_connection, init_db
 from extractor import extract_text_hybrid
@@ -24,10 +23,34 @@ GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 # 2. Configure Gemini
 genai.configure(api_key=GEMINI_API_KEY)
 
-# 3. Load local embedding model once at startup
-print("Loading local embedding model...")
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-print("Embedding model loaded!")
+# 3. Load lightweight embedding model (FastEmbed ONNX - Memory: ~75MB for 512MB RAM cloud tiers)
+class LightweightEmbedder:
+    def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+        try:
+            from fastembed import TextEmbedding
+            print("[Embedding Engine] Initializing FastEmbed (ONNX, ultra-lightweight)...")
+            self._backend = "fastembed"
+            self._model = TextEmbedding(model_name=model_name)
+        except Exception as e:
+            print(f"[Embedding Engine] Fallback to SentenceTransformer: {e}")
+            from sentence_transformers import SentenceTransformer
+            self._backend = "sentence_transformers"
+            self._model = SentenceTransformer(model_name.replace("sentence-transformers/", ""))
+
+    def encode(self, text):
+        if self._backend == "fastembed":
+            if isinstance(text, str):
+                return list(self._model.embed([text]))[0].tolist()
+            return [x.tolist() for x in self._model.embed(text)]
+        else:
+            return self._model.encode(text)
+
+    def get_embedding_dimension(self):
+        return 384
+
+print("Loading embedding model...")
+embedding_model = LightweightEmbedder()
+print("Embedding model loaded successfully!")
 
 app = FastAPI(title="AI College Assistant API")
 
