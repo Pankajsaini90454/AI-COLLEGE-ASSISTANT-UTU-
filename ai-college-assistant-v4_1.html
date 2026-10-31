@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI College Assistant - System Architecture</title>
+<style>
+:root{--bg:#0b0f19;--panel:#121826;--line:#243049;--line2:#33436a;--text:#e6eaf2;--mute:#94a0b8;--acc:#60A5FA;--acc2:#3B82F6}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto}
+.layout{display:grid;grid-template-columns:176px minmax(0,1fr) 250px;gap:14px;align-items:start}
+.side{display:flex;flex-direction:column;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:0 0 8px;font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line2);border-radius:9px;background:#1a2236;color:var(--text);font-size:13px;font-weight:600;min-height:38px;padding:8px 12px;cursor:pointer;transition:background .15s,border-color .15s,transform .08s}
+.btn:hover{background:#222d48;border-color:#4a5f93}
+.btn:active{transform:translateY(1px)}
+.btn.sel{background:var(--acc2);border-color:var(--acc);color:#fff}
+.sq{width:44px;padding:0;font-size:17px}
+.full{width:100%;text-align:left}
+.col{display:flex;flex-direction:column;gap:8px}
+.chip{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--mute);font-size:12px;font-weight:600;padding:7px 10px;text-align:left;cursor:pointer;transition:background .15s,color .15s}
+.chip:hover{background:#1a2236;color:var(--text)}
+.chip.on{background:rgba(96,165,250,.16);border-color:var(--acc);color:#fff}
+.stage{position:relative;height:540px;border-radius:14px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+#c{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.ttl{position:absolute;top:14px;left:0;right:0;text-align:center;pointer-events:none;z-index:2}
+.ttl h1{margin:0;font-size:clamp(16px,3vw,24px);font-weight:700;letter-spacing:.14em;color:#fff}
+.ttl p{margin:5px 0 0;font-size:12px;color:var(--mute);letter-spacing:.04em}
+.ttl i{display:block;width:56px;height:2px;background:var(--acc);margin:8px auto 0;border-radius:2px}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mute);pointer-events:none;z-index:2}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend b{width:9px;height:9px;border-radius:3px;display:inline-block}
+.hint{position:absolute;right:12px;bottom:10px;font-size:11px;color:#6b7690;pointer-events:none;z-index:2}
+.info{min-height:150px;position:sticky;top:16px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+#it{font-size:16px;font-weight:700;margin:0 0 6px;color:#fff}
+#ib{font-size:14px;color:#b4bdd1;margin:0;line-height:1.55}
+#s2{width:100%;height:100%;display:none;touch-action:none;cursor:grab;background:var(--bg)}
+#s2 text{font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;pointer-events:none;user-select:none}
+#s2 .e{stroke-dasharray:.14 .1;animation:dash 1.2s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-.24}}
+.err{padding:20px;text-align:center;color:#fca5a5;font-size:14px}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.stage{height:460px}.right{order:2}.left{order:3}.chips{flex-direction:row;flex-wrap:wrap}.hint{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="layout">
+<aside class="side left">
+<div>
+<p class="lbl">View</p>
+<div class="row">
+<button class="btn" id="v3" style="width:calc(50% - 4px)">3D</button>
+<button class="btn" id="v2" style="width:calc(50% - 4px)">2D</button>
+</div>
+</div>
+<div>
+<p class="lbl">Navigate</p>
+<div class="row">
+<button class="btn sq" id="up" aria-label="Move up">&uarr;</button>
+<button class="btn sq" id="dn" aria-label="Move down">&darr;</button>
+<button class="btn sq" id="lf" aria-label="Move left">&larr;</button>
+<button class="btn sq" id="rt" aria-label="Move right">&rarr;</button>
+<button class="btn sq" id="zi" aria-label="Zoom in">+</button>
+<button class="btn sq" id="zo" aria-label="Zoom out">&minus;</button>
+</div>
+<div class="col" style="margin-top:8px">
+<button class="btn full" id="rs">Reset view</button>
+<button class="btn full" id="pp">Pause</button>
+</div>
+</div>
+<div>
+<p class="lbl">Flows</p>
+<div class="col" id="flows"></div>
+</div>
+<div>
+<p class="lbl">Steps</p>
+<div class="col chips" id="chips"></div>
+</div>
+</aside>
+
+<div class="stage">
+<div class="ttl"><h1>AI COLLEGE ASSISTANT</h1><p>System architecture</p><i></i></div>
+<canvas id="c" role="img" aria-label="3D diagram of the AI College Assistant architecture"></canvas>
+<svg id="s2" viewBox="-5.6 -4.6 11.2 8.6" preserveAspectRatio="xMidYMid meet" role="img" aria-label="2D diagram of the AI College Assistant architecture"></svg>
+<div class="legend" id="legend"></div>
+<div class="hint" id="hint">Drag to rotate &middot; pinch or scroll to zoom &middot; tap a box</div>
+</div>
+
+<aside class="right">
+<div class="info" aria-live="polite"><p class="lbl">Details</p><p id="it"></p><p id="ib"></p></div>
+</aside>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+if(!window.THREE){document.querySelector('.stage').innerHTML='<p class="err">Could not load three.js. Check your connection and reload.</p>';return;}
+
+/* ---------- data ---------- */
+const ACC='#60A5FA';
+// category: [top, bottom, label]
+const CAT={
+  client:['#4B6697','#364D78','Client'],
+  core:['#4F7CF0','#3A5FCC','Application logic'],
+  model:['#8272E6','#6455C8','AI model'],
+  data:['#2BAE9F','#1B8479','Data stores'],
+  tool:['#C48A33','#9A6A1F','File tools']
+};
+// key: [name, subtitle, category, x, y, description]
+const ND={
+U:['User','Student','client',-3.4,1.2,'The student types a question in the HTML chat page. The frontend sends it to RAG as a query.'],
+R:['RAG','Retrieval logic','core',0,1.2,'The retrieval logic inside FastAPI. It checks the cache, gets context from the database, builds the prompt and calls Ollama.'],
+C:['Redis','Cache','data',3.4,2.8,'The cache. It keeps recent question and answer pairs for a while. A hit returns an answer instantly and skips the model.'],
+P:['Postgres','Database','data',3.4,1.2,'The database. It stores documents, text chunks and embeddings. pgvector finds the chunks closest to the question.'],
+L:['Ollama 3.2','Local LLM','model',0,-0.6,'The local open-source model. It reads the question plus the retrieved context and writes the answer. It can also call the fetch tool.'],
+A:['Answer','Q and A','client',-3.4,-0.6,'The question and answer output. This is the reply the student sees, and it is also saved in Redis for next time.'],
+F:['Fetch','Gets files','tool',3.4,-0.6,'The tool Ollama calls to get a file such as notes, a syllabus or a timetable, then pass its text on for storage.'],
+D:['File','Source docs','tool',0,-2.4,'The source document. It can be an image, a video or a PDF that has to be read before it can be searched.'],
+O:['Tesseract','OCR for images','tool',-3.4,-2.4,'Tesseract OCR reads text from images and from video frames so that scanned notes become searchable text.'],
+Q:['PDF convert','md, csv, json','tool',3.4,-2.4,'Converts a PDF into markdown, csv or json so the content is readable and can be stored in Postgres.']};
+
+const E={UR:[[-2.1,1.2],[-1.3,1.2]],RC:[[1.3,1.2],[2.1,2.8]],RP:[[1.3,1.2],[2.1,1.2]],RL:[[0,0.7],[0,-0.1]],LA:[[-1.3,-0.6],[-2.1,-0.6]],AU:[[-3.4,-0.1],[-3.4,0.7]],LF:[[1.3,-0.6],[2.1,-0.6]],FP:[[3.4,-0.1],[3.4,0.7]],CP:[[3.4,2.3],[3.4,1.7]],FD:[[3.4,-1.1],[1.0,-1.9]],DO:[[-1.3,-2.4],[-2.1,-2.4]],DQ:[[1.3,-2.4],[2.1,-2.4]]};
+
+const FL={
+hit:{label:'Cache hit',n:['U','R','C','R','U'],s:[
+['Query','The student sends the question to RAG.'],
+['Check cache','RAG looks the question up in Redis.'],
+['Cache hit','Redis returns the saved answer to RAG.'],
+['Reply','The saved answer is shown to the student. Ollama is skipped.']]},
+miss:{label:'Cache miss',n:['U','R','C','P','R','L','A','U'],s:[
+['Query','The student sends the question to RAG.'],
+['Check cache','RAG looks the question up in Redis.'],
+['Miss','Nothing is saved, so Redis hands over to Postgres.'],
+['Get context','Postgres returns the most relevant chunks to RAG.'],
+['Build prompt','RAG sends the question plus context to Ollama 3.2.'],
+['Generate','Ollama 3.2 writes the answer from that context.'],
+['Reply','The answer is shown to the student and saved in Redis.']]},
+fetch:{label:'Fetch image file',n:['U','R','L','F','D','O','D','F','P'],s:[
+['Ask','The student asks about a document.'],
+['Plan','RAG asks Ollama 3.2 what to do.'],
+['Call fetch','Ollama calls the fetch tool.'],
+['Get file','Fetch locates the file.'],
+['Read text','Tesseract OCR reads the text from the image.'],
+['Return text','The OCR text goes back to the file step.'],
+['Send text','Fetch receives the clean text.'],
+['Store','The text is saved in Postgres for future queries.']]},
+pdf:{label:'Read PDF',n:['U','R','L','F','D','Q','D','F','P'],s:[
+['Ask','The student asks about a PDF.'],
+['Plan','RAG asks Ollama 3.2 what to do.'],
+['Call fetch','Ollama calls the fetch tool.'],
+['Get file','Fetch locates the PDF.'],
+['Convert','PDF convert turns it into markdown, csv or json.'],
+['Return text','The converted text goes back to the file step.'],
+['Send text','Fetch receives the clean text.'],
+['Store','The text is saved in Postgres for future queries.']]}
+};
+
+/* ---------- legend ---------- */
+document.getElementById('legend').innerHTML=Object.keys(CAT).map(k=>'<span><b style="background:'+CAT[k][1]+'"></b>'+CAT[k][2]+'</span>').join('');
+
+/* ---------- renderer / camera ---------- */
+const el=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas:el,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0b0f19);
+const camera=new THREE.PerspectiveCamera(40,1,0.1,100);
+let Z0=14;
+function fit(){
+  const w=el.clientWidth,h=el.clientHeight;
+  if(!w||!h)return;
+  const home=Math.abs(camera.position.z-Z0)<1e-6;
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h;
+  Z0=Math.max(14,10.6/(0.728*w/h));
+  if(home)camera.position.z=Z0;
+  camera.updateProjectionMatrix();
+}
+camera.position.set(0,0,Z0);
+fit();
+window.addEventListener('resize',fit);
+if(window.ResizeObserver)new ResizeObserver(fit).observe(el);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.9));
+const dl=new THREE.DirectionalLight(0xffffff,0.5);dl.position.set(4,8,10);scene.add(dl);
+
+// subtle background dots
+const dots=(function(){
+  const pos=[];
+  for(let i=0;i<140;i++){
+    const r=26+Math.random()*34,th=Math.random()*6.2832,ph=Math.acos(2*Math.random()-1);
+    pos.push(r*Math.sin(ph)*Math.cos(th),r*Math.sin(ph)*Math.sin(th),r*Math.cos(ph));
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  const p=new THREE.Points(g,new THREE.PointsMaterial({size:0.1,color:0x6b7fb0,transparent:true,opacity:0.35}));
+  scene.add(p);return p;
+})();
+
+const GY0=-0.5,RX=0.2,RY=-0.35;
+const group=new THREE.Group();
+group.position.set(0,GY0,0);
+group.rotation.set(RX,RY,0);
+scene.add(group);
+
+/* ---------- boxes ---------- */
+const boxes=[],boxMap={},N={};
+const BW=2.6;
+Object.keys(ND).forEach(k=>{
+  const [name,sub,cat,x,y]=ND[k];
+  const cols=CAT[cat];
+  N[k]=[x,y];
+  const cv=document.createElement('canvas');cv.width=BW*200;cv.height=200;
+  const g=cv.getContext('2d');
+  const gr=g.createLinearGradient(0,0,0,200);gr.addColorStop(0,cols[0]);gr.addColorStop(1,cols[1]);
+  g.fillStyle=gr;g.fillRect(0,0,cv.width,200);
+  g.strokeStyle='rgba(255,255,255,0.22)';g.lineWidth=4;g.strokeRect(2,2,cv.width-4,196);
+  g.textAlign='center';g.fillStyle='#fff';
+  g.font='600 66px system-ui, Arial, sans-serif';g.fillText(name,cv.width/2,92);
+  g.fillStyle='rgba(255,255,255,0.78)';g.font='400 46px system-ui, Arial, sans-serif';g.fillText(sub,cv.width/2,154);
+  const side=new THREE.MeshLambertMaterial({color:cols[1]});
+  const face=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)});
+  const m=new THREE.Mesh(new THREE.BoxGeometry(BW,1,1.1),[side,side,side,side,face,side]);
+  m.position.set(x,y,0);m.userData.key=k;
+  group.add(m);boxes.push(m);boxMap[k]=m;
+});
+
+/* ---------- edges ---------- */
+const arrows=[];
+Object.keys(E).forEach((k,i)=>{
+  const a=E[k][0],b=E[k][1];
+  const gm=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a[0],a[1],0),new THREE.Vector3(b[0],b[1],0)]);
+  group.add(new THREE.Line(gm,new THREE.LineBasicMaterial({color:0x51628a})));
+  const cone=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.28,12),new THREE.MeshBasicMaterial({color:0x9DB8F0}));
+  const dir=new THREE.Vector3(b[0]-a[0],b[1]-a[1],0).normalize();
+  cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+  group.add(cone);
+  arrows.push({m:cone,a:a,b:b,o:(i*0.17)%1});
+});
+function edgeFor(f,t){
+  if(E[f+t])return{k:f+t,a:E[f+t][0],b:E[f+t][1]};
+  const k=t+f;
+  if(!E[k])throw new Error('No edge between '+f+' and '+t);
+  return{k:k,a:E[k][1],b:E[k][0]};
+}
+
+const outline=new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.BoxGeometry(BW+0.16,1.16,1.26)),
+  new THREE.LineBasicMaterial({color:0xE6EAF2}));
+outline.visible=false;group.add(outline);
+
+/* ---------- ball + halo ---------- */
+const ball=new THREE.Mesh(new THREE.SphereGeometry(0.22,24,24),new THREE.MeshBasicMaterial({color:ACC}));
+group.add(ball);
+const halo=(function(){
+  const hc=document.createElement('canvas');hc.width=hc.height=128;
+  const hg=hc.getContext('2d'),rg=hg.createRadialGradient(64,64,0,64,64,64);
+  rg.addColorStop(0,'rgba(255,255,255,0.9)');rg.addColorStop(0.4,'rgba(255,255,255,0.3)');rg.addColorStop(1,'rgba(255,255,255,0)');
+  hg.fillStyle=rg;hg.fillRect(0,0,128,128);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(hc),color:ACC,blending:THREE.AdditiveBlending,depthTest:false,transparent:true}));
+  sp.renderOrder=9;group.add(sp);return sp;
+})();
+
+function v(p){return new THREE.Vector3(p[0],p[1],0.7);}
+function badge(n){
+  const cv=document.createElement('canvas');cv.width=cv.height=128;
+  const g=cv.getContext('2d');
+  g.beginPath();g.arc(64,64,56,0,6.2832);g.fillStyle='#0b0f19';g.fill();
+  g.lineWidth=8;g.strokeStyle=ACC;g.stroke();
+  g.fillStyle='#fff';g.font='700 70px system-ui, Arial, sans-serif';g.textAlign='center';g.textBaseline='middle';
+  g.fillText(String(n),64,68);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:false,transparent:true}));
+  sp.renderOrder=10;return sp;
+}
+
+/* ---------- flow state ---------- */
+const chipsEl=document.getElementById('chips'),it=document.getElementById('it'),ib=document.getElementById('ib');
+const flowsEl=document.getElementById('flows');
+const flowBtns={};
+let fl,moves=[],badges=[],chipEls=[],seg=0,d=0,pause=0,mode='step',paused=false,wrap=false;
+
+function disposeBadge(s){group.remove(s);if(s.material.map)s.material.map.dispose();s.material.dispose();}
+function setFlow(key){
+  fl=FL[key];
+  Object.keys(flowBtns).forEach(k=>flowBtns[k].classList.toggle('sel',k===key));
+  badges.forEach(disposeBadge);badges=[];clear2();
+  const cnt={};moves=[];
+  for(let i=0;i<fl.n.length-1;i++){
+    const f=fl.n[i],t=fl.n[i+1],e=edgeFor(f,t);
+    const pts=[v(N[f]),v(e.a),v(e.b),v(N[t])];
+    let len=0;for(let j=1;j<4;j++)len+=pts[j].distanceTo(pts[j-1]);
+    moves.push({pts:pts,len:len});
+    cnt[e.k]=(cnt[e.k]||0)+1;
+    const kk=cnt[e.k]-1;
+    const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],L=Math.hypot(dx,dy);
+    const o=kk===0?0:(kk%2?1:-1)*0.55*Math.ceil(kk/2);
+    const sp=badge(i+1);
+    sp.position.set((e.a[0]+e.b[0])/2+(-dy/L)*o,(e.a[1]+e.b[1])/2+(dx/L)*o,0.9);
+    group.add(sp);badges.push(sp);add2Badge(i+1,sp.position.x,sp.position.y);
+  }
+  chipsEl.innerHTML='';chipEls=[];
+  fl.s.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='chip';
+    b.textContent=(i+1)+'. '+s[0];
+    b.addEventListener('click',()=>goTo(i));
+    chipsEl.appendChild(b);chipEls.push(b);
+  });
+  seg=0;d=0;pause=0.3;wrap=false;mode='step';hideOutline();
+  ball.position.copy(moves[0].pts[0]);
+  say();
+}
+function goTo(i){
+  seg=i;d=0;wrap=false;pause=0.3;
+  ball.position.copy(moves[i].pts[0]);
+  mode='step';hideOutline();say();
+}
+function say(){
+  chipEls.forEach((b,i)=>b.classList.toggle('on',i===seg));
+  badges.forEach((s,i)=>{const z=i===seg?0.95:0.6;s.scale.set(z,z,1);s.material.opacity=i===seg?1:0.6;});
+  style2();
+  if(mode==='step'){it.textContent=(seg+1)+'. '+fl.s[seg][0];ib.textContent=fl.s[seg][1];}
+}
+function along(m,dist){
+  let r=dist;
+  for(let j=1;j<4;j++){
+    const a=m.pts[j-1],b=m.pts[j],L=a.distanceTo(b);
+    if(r<=L||j===3)return new THREE.Vector3().lerpVectors(a,b,L>0?Math.min(r/L,1):1);
+    r-=L;
+  }
+}
+function select(k){
+  mode='task';
+  outline.position.copy(boxMap[k].position);outline.visible=true;show2(k);
+  it.textContent=ND[k][0]+' ('+ND[k][1]+')';ib.textContent=ND[k][5];
+}
+
+/* ---------- 2D view ---------- */
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('s2');
+let view='3d',tx=0,ty=0,s2=1;
+function mk(tag,attrs,parent){const n=document.createElementNS(NS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);if(parent)parent.appendChild(n);return n;}
+const defs=mk('defs',{},svg);
+Object.keys(CAT).forEach(c=>{
+  const g=mk('linearGradient',{id:'g-'+c,x1:0,y1:0,x2:0,y2:1},defs);
+  mk('stop',{offset:'0','stop-color':CAT[c][0]},g);mk('stop',{offset:'1','stop-color':CAT[c][1]},g);
+});
+const mkr=mk('marker',{id:'ah',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:5,markerHeight:5,orient:'auto'},defs);
+mk('path',{d:'M0 0L10 5L0 10z',fill:'#9DB8F0'},mkr);
+const world=mk('g',{},svg);
+Object.keys(E).forEach(k=>{
+  const a=E[k][0],b=E[k][1];
+  mk('line',{class:'e',x1:a[0],y1:-a[1],x2:b[0],y2:-b[1],stroke:'#6C80B0','stroke-width':0.05,'marker-end':'url(#ah)'},world);
+});
+Object.keys(ND).forEach(k=>{
+  const [name,sub,cat,x,y]=ND[k];
+  const g=mk('g',{'data-key':k,style:'cursor:pointer'},world);
+  mk('rect',{x:x-1.3,y:-y-0.5,width:2.6,height:1,rx:0.14,fill:'url(#g-'+cat+')',stroke:'rgba(255,255,255,.25)','stroke-width':0.03},g);
+  const t1=mk('text',{x:x,y:-y-0.02,'text-anchor':'middle','font-size':0.33,'font-weight':600,fill:'#fff'},g);t1.textContent=name;
+  const t2=mk('text',{x:x,y:-y+0.3,'text-anchor':'middle','font-size':0.22,fill:'rgba(255,255,255,.8)'},g);t2.textContent=sub;
+});
+const o2=mk('rect',{rx:0.17,fill:'none',stroke:'#e6eaf2','stroke-width':0.05,width:2.76,height:1.16,style:'display:none;pointer-events:none'},world);
+const bl2=mk('g',{},world);
+const ballHalo2=mk('circle',{r:0.42,fill:ACC,opacity:0.25},world);
+const ball2=mk('circle',{r:0.2,fill:ACC,stroke:'#fff','stroke-width':0.03},world);
+let b2=[];
+function clear2(){b2.forEach(o=>bl2.removeChild(o.g));b2=[];}
+function add2Badge(n,x,y){
+  const g=mk('g',{},bl2);
+  mk('circle',{r:0.24,fill:'#0b0f19',stroke:ACC,'stroke-width':0.05},g);
+  const t=mk('text',{y:0.09,'text-anchor':'middle','font-size':0.26,'font-weight':700,fill:'#fff'},g);t.textContent=n;
+  b2.push({g:g,x:x,y:-y});
+}
+function style2(){
+  b2.forEach((o,i)=>{const z=i===seg?1:0.7;o.g.setAttribute('transform','translate('+o.x+' '+o.y+') scale('+z+')');o.g.setAttribute('opacity',i===seg?1:0.6);});
+}
+function show2(k){o2.setAttribute('x',ND[k][3]-1.38);o2.setAttribute('y',-ND[k][4]-0.58);o2.style.display='';}
+function hideOutline(){outline.visible=false;o2.style.display='none';}
+function apply2(){world.setAttribute('transform','translate('+tx+' '+ty+') scale('+s2+')');}
+function setView(m){
+  view=m;
+  el.style.display=m==='3d'?'block':'none';
+  svg.style.display=m==='2d'?'block':'none';
+  document.getElementById('v3').classList.toggle('sel',m==='3d');
+  document.getElementById('v2').classList.toggle('sel',m==='2d');
+  document.getElementById('hint').textContent=m==='3d'?'Drag to rotate \u00b7 pinch or scroll to zoom \u00b7 tap a box':'Drag to pan \u00b7 pinch or scroll to zoom \u00b7 tap a box';
+  if(m==='3d')fit();
+}
+document.getElementById('v3').addEventListener('click',()=>setView('3d'));
+document.getElementById('v2').addEventListener('click',()=>setView('2d'));
+const p2=new Map();let dn2=null,pin2=0;
+function pd2(){const a=[...p2.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
+svg.addEventListener('pointerdown',e=>{
+  p2.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  try{svg.setPointerCapture(e.pointerId);}catch(_){}
+  svg.style.cursor='grabbing';
+  if(p2.size===1)dn2={t:performance.now(),m:0};else{dn2=null;pin2=pd2();}
+});
+svg.addEventListener('pointermove',e=>{
+  const p=p2.get(e.pointerId);if(!p)return;
+  const dx=e.clientX-p.x,dy=e.clientY-p.y;
+  p.x=e.clientX;p.y=e.clientY;
+  if(p2.size===1){
+    if(dn2)dn2.m+=Math.abs(dx)+Math.abs(dy);
+    const u=1/Math.max(0.0001,Math.min(svg.clientWidth/11.2,svg.clientHeight/8.6));
+    tx+=dx*u;ty+=dy*u;apply2();
+  }else if(p2.size===2){
+    const nd=pd2();if(pin2>0&&nd>0)zoom(pin2/nd);pin2=nd;
+  }
+});
+function up2(e){
+  if(p2.size===1&&dn2&&dn2.m<8&&performance.now()-dn2.t<600&&e.type==='pointerup'){
+    const t=document.elementFromPoint(e.clientX,e.clientY);
+    const g=t&&t.closest?t.closest('[data-key]'):null;
+    if(g)select(g.getAttribute('data-key'));else{mode='step';hideOutline();say();}
+  }
+  p2.delete(e.pointerId);dn2=null;pin2=0;svg.style.cursor='grab';
+}
+svg.addEventListener('pointerup',up2);
+svg.addEventListener('pointercancel',up2);
+svg.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY>0?1.08:0.92);},{passive:false});
+
+/* ---------- controls ---------- */
+Object.keys(FL).forEach(k=>{
+  const b=document.createElement('button');
+  b.type='button';b.className='btn full';b.textContent=FL[k].label;
+  b.addEventListener('click',()=>setFlow(k));
+  flowsEl.appendChild(b);flowBtns[k]=b;
+});
+function zoom(f){
+  if(view==='2d'){s2=Math.max(0.6,Math.min(3,s2/f));apply2();return;}
+  camera.position.z=Math.max(7,Math.min(30,camera.position.z*f));
+}
+function pan(dx,dy){
+  if(view==='2d'){tx+=dx*0.4;ty-=dy*0.4;apply2();return;}
+  const s=0.4*camera.position.z/15.5;
+  group.position.x=Math.max(-9,Math.min(9,group.position.x+dx*s));
+  group.position.y=Math.max(-9,Math.min(9,group.position.y+dy*s));
+}
+function hold(id,fn){
+  const b=document.getElementById(id);let iv=null;
+  const stop=()=>{if(iv){clearInterval(iv);iv=null;}};
+  b.addEventListener('pointerdown',()=>{stop();fn();iv=setInterval(fn,80);});
+  ['pointerup','pointerleave','pointercancel','blur'].forEach(ev=>b.addEventListener(ev,stop));
+  b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});
+}
+hold('up',()=>pan(0,1));hold('dn',()=>pan(0,-1));hold('lf',()=>pan(-1,0));hold('rt',()=>pan(1,0));
+hold('zi',()=>zoom(0.94));hold('zo',()=>zoom(1.06));
+document.getElementById('rs').addEventListener('click',()=>{
+  group.rotation.set(RX,RY,0);group.position.set(0,GY0,0);camera.position.z=Z0;tx=0;ty=0;s2=1;apply2();
+});
+const ppBtn=document.getElementById('pp');
+ppBtn.addEventListener('click',()=>{paused=!paused;ppBtn.textContent=paused?'Play':'Pause';});
+
+/* ---------- pointer interaction ---------- */
+const ray=new THREE.Raycaster(),ptrs=new Map();
+let down=null,pinch=0;
+function pdist(){const a=[...ptrs.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
+el.addEventListener('pointerdown',e=>{
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  try{el.setPointerCapture(e.pointerId);}catch(_){}
+  el.style.cursor='grabbing';
+  if(ptrs.size===1)down={t:performance.now(),m:0};else{down=null;pinch=pdist();}
+});
+el.addEventListener('pointermove',e=>{
+  const p=ptrs.get(e.pointerId);if(!p)return;
+  const dx=e.clientX-p.x,dy=e.clientY-p.y;
+  p.x=e.clientX;p.y=e.clientY;
+  if(ptrs.size===1){
+    if(down)down.m+=Math.abs(dx)+Math.abs(dy);
+    group.rotation.y=Math.max(-1.3,Math.min(1.3,group.rotation.y+dx*0.01));
+    group.rotation.x=Math.max(-0.6,Math.min(0.7,group.rotation.x+dy*0.01));
+  }else if(ptrs.size===2){
+    const nd=pdist();
+    if(pinch>0&&nd>0)zoom(pinch/nd);
+    pinch=nd;
+  }
+});
+function up(e){
+  const wasOne=ptrs.size===1;
+  if(wasOne&&down&&down.m<8&&performance.now()-down.t<600&&e.type==='pointerup'){
+    const r=el.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1),camera);
+    const h=ray.intersectObjects(boxes,false);
+    if(h.length)select(h[0].object.userData.key);
+    else{mode='step';hideOutline();say();}
+  }
+  ptrs.delete(e.pointerId);down=null;pinch=0;el.style.cursor='grab';
+}
+el.addEventListener('pointerup',up);
+el.addEventListener('pointercancel',up);
+el.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY>0?1.08:0.92);},{passive:false});
+
+/* ---------- loop ---------- */
+let last=performance.now();
+document.addEventListener('visibilitychange',()=>{last=performance.now();});
+function loop(now){
+  const dt=Math.min((now-last)/1000,0.05);last=now;
+  const tm=now/1000;
+  dots.rotation.y+=dt*0.012;
+  arrows.forEach(a=>{
+    const u=(tm*0.4+a.o)%1;
+    a.m.position.set(a.a[0]+(a.b[0]-a.a[0])*u,a.a[1]+(a.b[1]-a.a[1])*u,0.05);
+  });
+  if(!paused){
+    if(pause>0){pause-=dt;}
+    else if(wrap){wrap=false;seg=0;d=0;pause=0.4;ball.position.copy(moves[0].pts[0]);say();}
+    else{
+      const m=moves[seg];d+=dt*3;
+      if(d>=m.len){
+        ball.position.copy(m.pts[3]);d=0;
+        if(seg+1>=moves.length){wrap=true;pause=1.3;}
+        else{seg++;pause=0.45;say();}
+      }else ball.position.copy(along(m,d));
+    }
+  }
+  halo.position.copy(ball.position);
+  ball2.setAttribute('cx',ball.position.x);ball2.setAttribute('cy',-ball.position.y);
+  ballHalo2.setAttribute('cx',ball.position.x);ballHalo2.setAttribute('cy',-ball.position.y);
+  const hs=1.0+0.18*Math.sin(tm*6);halo.scale.set(hs,hs,1);
+  if(view==='3d')renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+setFlow('miss');
+setView('3d');
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
