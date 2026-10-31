@@ -17,11 +17,15 @@ import threads_store
 
 # 1. Load environment variables
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_KEY")
 GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 # 2. Configure Gemini
-genai.configure(api_key=GEMINI_API_KEY)
+if GEMINI_API_KEY:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+    except Exception as e:
+        print(f"[Gemini Config Notice] {e}")
 
 # 3. Load lightweight embedding model (FastEmbed ONNX - Memory: ~75MB for 512MB RAM cloud tiers)
 class LightweightEmbedder:
@@ -231,8 +235,22 @@ def ask_assistant(request: QuestionRequest):
     user_question = request.question.strip()
     current_year = datetime.now().year
 
+    # Check for API Key
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_KEY")
+    if not api_key:
+        def missing_key_stream():
+            err_msg = "Gemini API key is missing on the server. Please add GEMINI_API_KEY in your Render dashboard under the 'Environment' tab."
+            yield f"data: {json.dumps({'error': err_msg})}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(
+            missing_key_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+        )
+
     try:
-        primary_model_name = GEMINI_MODEL_NAME
+        genai.configure(api_key=api_key)
+        primary_model_name = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
         fallback_model_name = "gemini-3.1-flash-lite"
 
         # 1. EXTRACT & UPDATE PERSISTENT MEMORIES

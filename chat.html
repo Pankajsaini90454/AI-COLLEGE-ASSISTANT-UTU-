@@ -2500,6 +2500,7 @@
             const contentEl = document.getElementById(`${aiBubbleId}-content`);
             let fullText = "";
             let retrievedSources = [];
+            let streamError = null;
 
             try {
                 const recentHistory = thread.messages
@@ -2539,7 +2540,10 @@
 
                     try {
                         const parsed = JSON.parse(raw);
-                        if (parsed.error) throw new Error(parsed.error);
+                        if (parsed.error) {
+                            streamError = parsed.error;
+                            return;
+                        }
                         if (parsed.sources) {
                             retrievedSources = parsed.sources;
                         }
@@ -2568,6 +2572,10 @@
 
                 buffer += decoder.decode();
                 if (!doneReceived && buffer.trim()) processLine(buffer);
+
+                if (streamError) {
+                    throw new Error(streamError);
+                }
 
                 if (!fullText) {
                     throw new Error("Empty response received from the assistant.");
