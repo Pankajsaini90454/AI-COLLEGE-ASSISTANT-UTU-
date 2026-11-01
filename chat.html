@@ -1982,6 +1982,8 @@
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(threads));
                 if (activeThreadId) {
                     localStorage.setItem(LOCAL_ACTIVE_KEY, activeThreadId);
+                } else {
+                    localStorage.removeItem(LOCAL_ACTIVE_KEY);
                 }
             } catch (e) {
                 console.warn("Could not save to localStorage:", e);
@@ -1995,12 +1997,8 @@
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         threads = parsed;
-                        const savedActive = localStorage.getItem(LOCAL_ACTIVE_KEY);
-                        if (savedActive && threads.some(t => t.id === savedActive)) {
-                            activeThreadId = savedActive;
-                        } else {
-                            activeThreadId = threads[0].id;
-                        }
+                        // Always default to New Chat view on initial page load
+                        activeThreadId = null;
                         renderSidebarThreads();
                         renderChatArea();
                         return true;
@@ -2021,12 +2019,8 @@
                     const data = await res.json();
                     if (data.threads && data.threads.length > 0) {
                         threads = data.threads;
-                        const savedActive = localStorage.getItem(LOCAL_ACTIVE_KEY);
-                        if (savedActive && threads.some(t => t.id === savedActive)) {
-                            activeThreadId = savedActive;
-                        } else {
-                            activeThreadId = threads[0].id;
-                        }
+                        // Default to New Chat view on initial page load while showing existing chats in sidebar
+                        activeThreadId = null;
                         saveThreadsLocally();
                         renderSidebarThreads();
                         renderChatArea();
@@ -2036,8 +2030,9 @@
                 console.warn("Server sync in progress, using local threads:", e);
             }
 
-            if (threads.length === 0) {
-                createNewThread(false);
+            if (!activeThreadId) {
+                renderSidebarThreads();
+                renderChatArea();
             }
         }
 
@@ -2099,32 +2094,7 @@
 
         // --- Thread Actions ---
         function createNewThread(shouldFocus = true) {
-            const newId = generateId();
-            const newThread = {
-                id: newId,
-                title: "New Conversation",
-                created_at: Date.now(),
-                updated_at: Date.now(),
-                messages: [
-                    {
-                        role: "assistant",
-                        content: "Hello! I am your AI College Assistant grounded with your university records and course documents. How can I assist you today?",
-                        time: formatTime(Date.now())
-                    }
-                ]
-            };
-
-            threads.unshift(newThread);
-            activeThreadId = newId;
-            saveThreadsLocally();
-            saveThreadToServer(newThread);
-            renderSidebarThreads();
-            renderChatArea();
-
-            if (shouldFocus) {
-                const input = document.getElementById("user-input");
-                if (input) input.focus();
-            }
+            handleNewChatClick();
         }
 
         function handleNewChatClick() {
@@ -2132,7 +2102,15 @@
                 alert("Please wait for the current response to finish.");
                 return;
             }
-            createNewThread(true);
+            activeThreadId = null;
+            saveThreadsLocally();
+            renderSidebarThreads();
+            renderChatArea();
+            const input = document.getElementById("user-input");
+            if (input) {
+                input.value = "";
+                input.focus();
+            }
         }
 
         function switchThread(threadId) {
@@ -2145,7 +2123,8 @@
             saveThreadsLocally();
             renderSidebarThreads();
             renderChatArea();
-            document.getElementById("user-input").focus();
+            const input = document.getElementById("user-input");
+            if (input) input.focus();
         }
 
         async function deleteThread(threadId, event) {
@@ -2156,10 +2135,8 @@
             saveThreadsLocally();
             await deleteThreadOnServer(threadId);
 
-            if (threads.length === 0) {
-                createNewThread(false);
-            } else if (activeThreadId === threadId) {
-                activeThreadId = threads[0].id;
+            if (activeThreadId === threadId) {
+                activeThreadId = null;
             }
 
             renderSidebarThreads();
@@ -2167,6 +2144,10 @@
         }
 
         function promptRenameActiveThread() {
+            if (!activeThreadId) {
+                alert("Please select or start a conversation first.");
+                return;
+            }
             const thread = threads.find(t => t.id === activeThreadId);
             if (!thread) return;
             const newName = prompt("Enter conversation title:", thread.title);
@@ -2175,32 +2156,35 @@
                 saveThreadsLocally();
                 saveThreadToServer(thread);
                 renderSidebarThreads();
-                document.getElementById("active-thread-title").textContent = thread.title;
+                const titleEl = document.getElementById("active-thread-title");
+                if (titleEl) titleEl.textContent = thread.title;
             }
         }
 
         function clearActiveThread() {
+            if (!activeThreadId) return;
             const thread = threads.find(t => t.id === activeThreadId);
             if (!thread) return;
-            if (!confirm("Clear messages in this conversation?")) return;
+            if (!confirm("Clear this conversation?")) return;
 
-            thread.messages = [
-                {
-                    role: "assistant",
-                    content: "Conversation cleared. What would you like to explore next?",
-                    time: formatTime(Date.now())
-                }
-            ];
-            thread.title = "New Conversation";
+            threads = threads.filter(t => t.id !== activeThreadId);
+            deleteThreadOnServer(activeThreadId);
+            activeThreadId = null;
             saveThreadsLocally();
-            saveThreadToServer(thread);
             renderSidebarThreads();
             renderChatArea();
         }
 
         function exportCurrentChat() {
+            if (!activeThreadId) {
+                alert("No active conversation to export.");
+                return;
+            }
             const thread = threads.find(t => t.id === activeThreadId);
-            if (!thread) return;
+            if (!thread || !thread.messages || thread.messages.length === 0) {
+                alert("No messages in this conversation to export.");
+                return;
+            }
 
             let md = `# ${thread.title}\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
             for (let msg of thread.messages) {
@@ -2267,11 +2251,8 @@
             const titleEl = document.getElementById("active-thread-title");
             const thread = threads.find(t => t.id === activeThreadId);
 
-            if (!thread) return;
-            titleEl.textContent = thread.title;
-
-            // Empty conversation starter
-            if (thread.messages.length === 1 && thread.messages[0].role === "assistant") {
+            if (!thread || !thread.messages || thread.messages.length === 0 || (thread.messages.length === 1 && thread.messages[0].role === "assistant")) {
+                if (titleEl) titleEl.textContent = thread ? thread.title : "New Chat";
                 chatBox.innerHTML = `
                     <div class="welcome-screen">
                         <div class="welcome-avatar-orb">
@@ -2321,6 +2302,8 @@
                 `;
                 return;
             }
+
+            if (titleEl) titleEl.textContent = thread.title;
 
             chatBox.innerHTML = thread.messages.map((msg, idx) => {
                 const isUser = msg.role === "user";
@@ -2448,15 +2431,32 @@
             const question = inputField.value.trim();
             if (question === "") return;
 
-            const thread = threads.find(t => t.id === activeThreadId);
-            if (!thread) return;
-
-            // Auto title on first user question
-            const hasUserMessages = thread.messages.some(m => m.role === "user");
-            if (!hasUserMessages) {
-                thread.title = question.length > 28 ? question.substring(0, 28) + "..." : question;
+            let thread = threads.find(t => t.id === activeThreadId);
+            if (!thread) {
+                // Initialize a brand new conversation thread
+                const newId = generateId();
+                const titleSnippet = question.length > 28 ? question.substring(0, 28) + "..." : question;
+                thread = {
+                    id: newId,
+                    title: titleSnippet,
+                    created_at: Date.now(),
+                    updated_at: Date.now(),
+                    messages: []
+                };
+                threads.unshift(thread);
+                activeThreadId = newId;
+                saveThreadsLocally();
+                saveThreadToServer(thread);
                 renderSidebarThreads();
-                document.getElementById("active-thread-title").textContent = thread.title;
+            } else {
+                // Auto title on first user question
+                const hasUserMessages = thread.messages.some(m => m.role === "user");
+                if (!hasUserMessages) {
+                    thread.title = question.length > 28 ? question.substring(0, 28) + "..." : question;
+                    renderSidebarThreads();
+                    const titleEl = document.getElementById("active-thread-title");
+                    if (titleEl) titleEl.textContent = thread.title;
+                }
             }
 
             // Append User Message to Thread
