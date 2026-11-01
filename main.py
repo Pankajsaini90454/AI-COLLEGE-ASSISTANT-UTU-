@@ -28,6 +28,14 @@ if GEMINI_API_KEY:
         print(f"[Gemini Config Notice] {e}")
 
 # 3. Load lightweight embedding model (FastEmbed ONNX - Memory: ~75MB for 512MB RAM cloud tiers)
+def to_vector(emb):
+    if hasattr(emb, "tolist"):
+        return [float(x) for x in emb.tolist()]
+    if isinstance(emb, list):
+        return [float(x) for x in emb]
+    return [float(x) for x in list(emb)]
+
+
 class LightweightEmbedder:
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
         try:
@@ -44,10 +52,11 @@ class LightweightEmbedder:
     def encode(self, text):
         if self._backend == "fastembed":
             if isinstance(text, str):
-                return list(self._model.embed([text]))[0].tolist()
-            return [x.tolist() for x in self._model.embed(text)]
+                return [float(x) for x in list(self._model.embed([text]))[0]]
+            return [[float(x) for x in emb] for emb in self._model.embed(text)]
         else:
-            return self._model.encode(text)
+            res = self._model.encode(text)
+            return to_vector(res)
 
     def get_embedding_dimension(self):
         return 384
@@ -102,7 +111,7 @@ def ensure_embedding_dimensions():
         outdated_chunks = cursor.fetchall()
 
         for chunk_id, chunk_text in outdated_chunks:
-            embedding_vector = embedding_model.encode(chunk_text).tolist()
+            embedding_vector = to_vector(embedding_model.encode(chunk_text))
             cursor.execute(
                 "UPDATE college_docs SET embedding = %s WHERE id = %s",
                 (embedding_vector, chunk_id)
@@ -208,24 +217,35 @@ async def upload_pdf(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, file_object)
 
         raw_text = extract_text_hybrid(file_location)
+        if not raw_text.strip():
+            return {"status": "Error", "message": f"No readable text found in {file.filename}."}
+
         chunks = chunk_text(raw_text, chunk_size=150)
 
-        ensure_embedding_dimensions()
         conn = get_db_connection()
         cursor = conn.cursor()
+        cursor.execute("DELETE FROM college_docs WHERE filename = %s", (file.filename,))
+        conn.commit()
+
+        from psycopg2.extras import execute_values
+        records = []
         for chunk in chunks:
-            embedding_vector = embedding_model.encode(chunk).tolist()
-            cursor.execute(
-                "INSERT INTO college_docs (filename, chunk_text, embedding) VALUES (%s, %s, %s)",
-                (file.filename, chunk, embedding_vector)
-            )
+            emb = to_vector(embedding_model.encode(chunk))
+            records.append((file.filename, chunk, emb))
+
+        execute_values(
+            cursor,
+            "INSERT INTO college_docs (filename, chunk_text, embedding) VALUES %s",
+            records
+        )
         conn.commit()
         cursor.close()
         conn.close()
 
-        return {"status": "Success", "message": f"{file.filename} uploaded and processed!"}
+        return {"status": "Success", "message": f"{file.filename} uploaded and processed ({len(chunks)} chunks)!"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        print(f"[Upload Error] {e}")
+        return {"status": "Error", "message": str(e)}
 
 
 # --- ASK ASSISTANT (RAG + MEMORY + STREAMING) ---
@@ -251,7 +271,7 @@ def ask_assistant(request: QuestionRequest):
     try:
         genai.configure(api_key=api_key)
         primary_model_name = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-        fallback_model_name = "gemini-3.1-flash-lite"
+        fallback_model_name = "gemini-3.8-flash"
 
         # 1. EXTRACT & UPDATE PERSISTENT MEMORIES
         # Rule-based detection (zero latency, zero API calls)
@@ -261,8 +281,7 @@ def ask_assistant(request: QuestionRequest):
         context = ""
         sources_metadata = []
         try:
-            ensure_embedding_dimensions()
-            question_embedding = embedding_model.encode(user_question).tolist()
+            question_embedding = to_vector(embedding_model.encode(user_question))
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("""
@@ -271,17 +290,46 @@ def ask_assistant(request: QuestionRequest):
                 ORDER BY embedding <=> %s::vector
                 LIMIT 8;
             """, (question_embedding, question_embedding))
-            results = cursor.fetchall()
+            results = list(cursor.fetchall())
+
+            # Student Profile & Course Booster: Ensure personal/course chunks are included for relevant queries
+            q_lower = user_question.lower()
+            personal_keywords = ["name", "who am i", "my roll", "profile", "cv", "resume", "10th", "12th", "marks", "score", "grade", "gpa", "cgpa", "pankaj", "data science", "syllabus", "calendar", "holiday"]
+            if any(k in q_lower for k in personal_keywords):
+                target_files = []
+                if any(k in q_lower for k in ["name", "who am i", "profile", "cv", "resume", "pankaj"]):
+                    target_files.extend(["Pankaj_CV.pdf", "The_Ultimate_Job_Ready_Data_Science_Course_Certificate.pdf"])
+                if any(k in q_lower for k in ["10th", "12th", "marks", "score", "grade", "gpa"]):
+                    target_files.extend(["12th.pdf", "10th.pdf"])
+                if "data science" in q_lower:
+                    target_files.extend(["data_science_notes.pdf", "The_Ultimate_Job_Ready_Data_Science_Course_Certificate.pdf"])
+                if any(k in q_lower for k in ["calendar", "holiday", "vacation"]):
+                    target_files.extend(["639222394440338142.pdf"])
+
+                if target_files:
+                    cursor.execute("""
+                        SELECT chunk_text, filename, 0.95 as similarity
+                        FROM college_docs
+                        WHERE filename = ANY(%s)
+                        ORDER BY id ASC
+                        LIMIT 4;
+                    """, (target_files,))
+                    boosted = cursor.fetchall()
+                    existing_texts = {r[0] for r in results}
+                    for b in boosted:
+                        if b[0] not in existing_texts:
+                            results.insert(0, b)
+
             cursor.close()
             conn.close()
 
             context_chunks = []
             seen_files = set()
-            for row in results:
+            for row in results[:10]:
                 chunk_text = row[0]
                 fname = row[1] if len(row) > 1 and row[1] else "College Document"
                 sim_score = float(row[2]) if len(row) > 2 and row[2] is not None else 0.85
-                context_chunks.append(chunk_text)
+                context_chunks.append(f"[{fname}]\n{chunk_text}")
 
                 if fname not in seen_files:
                     seen_files.add(fname)

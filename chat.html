@@ -2519,8 +2519,17 @@
                 });
 
                 if (!response.ok || response.headers.get("content-type")?.includes("application/json")) {
-                    const data = await response.json();
-                    throw new Error(data.detail || data.error || "Unexpected response from server.");
+                    let errMsg = `Server returned error (${response.status})`;
+                    try {
+                        const data = await response.json();
+                        errMsg = data.detail || data.error || errMsg;
+                    } catch (e) {
+                        try {
+                            const raw = await response.text();
+                            if (raw) errMsg = raw.slice(0, 150);
+                        } catch (_) {}
+                    }
+                    throw new Error(errMsg);
                 }
 
                 const reader = response.body.getReader();
@@ -2654,8 +2663,18 @@
                     body: formData
                 });
 
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseErr) {
+                    let raw = "";
+                    try { raw = await response.text(); } catch (_) {}
+                    throw new Error(raw.slice(0, 150) || "Server returned an unexpected response.");
+                }
+
+                if (!response.ok || data.status === "Error" || data.error) {
+                    throw new Error(data.message || data.error || data.detail || "Upload failed.");
+                }
 
                 statusText.style.color = "var(--accent-emerald)";
                 statusText.innerText = `Uploaded: ${file.name}`;
