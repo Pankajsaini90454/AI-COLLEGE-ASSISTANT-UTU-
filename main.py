@@ -520,11 +520,10 @@ async def generate_cloned_tts(request: TTSRequest):
         "reference_id": voice_id,
         "format": "mp3",
         "normalize": True,
-        "temperature": 0.2,
+        "temperature": 0.7,
         "latency": "balanced",
-        "repetition_penalty": 1.2,
         "prosody": {
-            "speed": 0.95,
+            "speed": 1.05,
             "volume": 0.0
         }
     }

@@ -2687,6 +2687,7 @@
 
             // Setup streaming AI placeholder in UI
             isStreaming = true;
+            resetVoiceQueue();
             typingIndicator.style.display = "flex";
             sendBtn.disabled = true;
 
@@ -2772,21 +2773,27 @@
                         if (parsed.text) {
                             fullText += parsed.text;
 
-                            const isVoiceQuery = isBuddyVoiceQuery && !isTextOnlyRequested(question);
-                            if (!isVoiceQuery) {
-                                contentEl.innerHTML = formatMarkdown(fullText);
-                                chatBox.scrollTop = chatBox.scrollHeight;
-                            } else {
-                                // Voice Mode: Show live generating status so user doesn't see text sitting in silence
-                                contentEl.innerHTML = `
-                                    <div class="voice-audio-card">
-                                        <div class="voice-wave-anim">
-                                            <span></span><span></span><span></span><span></span><span></span>
-                                        </div>
-                                        <span>🎙️ Pankaj Voice is speaking...</span>
-                                    </div>
-                                `;
-                                chatBox.scrollTop = chatBox.scrollHeight;
+                            // Token Streaming: Show text word-by-word on screen immediately
+                            contentEl.innerHTML = formatMarkdown(fullText);
+                            chatBox.scrollTop = chatBox.scrollHeight;
+
+                            // PARALLEL VOICE PIPELINE: Detect sentence boundary and immediately dispatch /tts!
+                            if (isBuddyVoiceQuery && !isTextOnlyRequested(question)) {
+                                voiceSentenceBuffer += parsed.text;
+                                let match;
+                                while (true) {
+                                    match = voiceSentenceBuffer.match(/([.?!।॥]+(?:\s+|$)|[\n\r]+)/);
+                                    if (!match && voiceSentenceBuffer.length > 80) {
+                                        match = voiceSentenceBuffer.match(/([,;]+(?:\s+|$))/);
+                                    }
+                                    if (!match) break;
+                                    const cutIdx = match.index + match[0].length;
+                                    const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
+                                    voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
+                                    if (sentence && sentence.length > 2) {
+                                        queueSentenceForTTS(sentence);
+                                    }
+                                }
                             }
                         }
                     } catch (parseErr) {
@@ -2831,12 +2838,18 @@
                 // Auto-TTS for Hello Buddy Hands-free Mode (Custom Cloned Voice)
                 if (isBuddyVoiceQuery) {
                     if (isTextOnlyRequested(question)) {
-                        contentEl.innerHTML = formatMarkdown(fullText);
                         updateBuddyBanner(`Displayed in text (as requested)`, "listening");
                         setTimeout(() => { resumeBuddyListening(); }, 1500);
                     } else {
-                        // Synchronized Audio & Text Playback
-                        playClonedVoiceAudio(fullText, contentEl);
+                        // Flush any remaining partial sentence in buffer to TTS queue
+                        if (voiceSentenceBuffer && voiceSentenceBuffer.trim()) {
+                            queueSentenceForTTS(voiceSentenceBuffer.trim());
+                            voiceSentenceBuffer = "";
+                        }
+                        // If no audio is queued or playing, resume listening immediately
+                        if (!isVoicePlaying && voiceQueue.length === 0) {
+                            resumeBuddyListening();
+                        }
                     }
                 }
 
@@ -3120,9 +3133,10 @@
             return text
                 .replace(/```[\s\S]*?```/g, "Code snippet omitted.")
                 .replace(/`([^`]+)`/g, "$1")
-                .replace(/[*_~#>-]/g, " ")
-                .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+                .replace(/\[.*?\]/g, "")
+                .replace(/[*_~#>]/g, " ")
                 .replace(/https?:\/\/\S+/g, "")
+                .replace(/[-–—]+/g, " ")
                 .replace(/\n+/g, ". ")
                 .replace(/\s+/g, " ")
                 .trim();
@@ -3162,10 +3176,7 @@
             const inputField = document.getElementById("user-input");
             if (inputField) inputField.value = "";
 
-            if (currentClonedAudio) {
-                try { currentClonedAudio.pause(); } catch (e) {}
-                currentClonedAudio = null;
-            }
+            resetVoiceQueue();
 
             if (window.speechSynthesis) {
                 window.speechSynthesis.cancel();
@@ -3185,83 +3196,135 @@
             toggleBuddyVoiceMode(false);
         }
 
-        // --- Cloned Voice Audio Playback via Fish Audio (/tts) with Browser Fallback ---
-        let currentClonedAudio = null;
+        // =========================================================================
+        // --- PARALLEL SENTENCE AUDIO QUEUE (FAST STREAMING ORDERED TTS) ---
+        // =========================================================================
+        let voiceQueue = [];
+        let isVoicePlaying = false;
+        let currentAudioItem = null;
+        let voiceSentenceBuffer = "";
+        let nextQueueId = 0;
 
-        async function playClonedVoiceAudio(text, targetEl = null) {
-            const cleaned = cleanTextForSpeech(text);
-            if (!cleaned) {
-                if (targetEl) targetEl.innerHTML = formatMarkdown(text);
-                resumeBuddyListening();
-                return;
+        function resetVoiceQueue() {
+            if (currentAudioItem && currentAudioItem.audio) {
+                try { currentAudioItem.audio.pause(); } catch (e) {}
+                if (currentAudioItem.url) {
+                    try { URL.revokeObjectURL(currentAudioItem.url); } catch (e) {}
+                }
+                currentAudioItem = null;
             }
+            voiceQueue.forEach(item => {
+                if (item.audio) {
+                    try { item.audio.pause(); } catch (e) {}
+                }
+                if (item.url) {
+                    try { URL.revokeObjectURL(item.url); } catch (e) {}
+                }
+            });
+            voiceQueue = [];
+            isVoicePlaying = false;
+            voiceSentenceBuffer = "";
+            nextQueueId = 0;
+        }
 
-            buddyState = "speaking";
-            updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> Speaking answer...`, "speaking");
+        function queueSentenceForTTS(sentence) {
+            const cleaned = cleanTextForSpeech(sentence);
+            if (!cleaned || cleaned.length < 2) return;
 
-            // Pause microphone while speaking
-            if (buddyRecognition) {
-                try { buddyRecognition.stop(); } catch (e) {}
-            }
+            const item = {
+                id: nextQueueId++,
+                text: cleaned,
+                status: 'pending',
+                audio: null,
+                url: null
+            };
+            voiceQueue.push(item);
 
+            fetchClonedTTSItem(item);
+        }
+
+        async function fetchClonedTTSItem(item) {
             try {
                 const resp = await fetch("/tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: cleaned.slice(0, 450) })
+                    body: JSON.stringify({ text: item.text.slice(0, 350) })
                 });
 
                 if (!resp.ok) {
-                    throw new Error(`TTS server returned status ${resp.status}`);
+                    throw new Error(`TTS server status ${resp.status}`);
                 }
 
                 const audioBlob = await resp.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
+                item.url = URL.createObjectURL(audioBlob);
+                item.audio = new Audio(item.url);
+                item.status = 'ready';
 
-                if (currentClonedAudio) {
-                    try { currentClonedAudio.pause(); } catch (e) {}
-                    currentClonedAudio = null;
+                if (!isVoicePlaying) {
+                    playNextInVoiceQueue();
                 }
-
-                const audio = new Audio(audioUrl);
-                currentClonedAudio = audio;
-
-                audio.onended = () => {
-                    URL.revokeObjectURL(audioUrl);
-                    currentClonedAudio = null;
-                    resumeBuddyListening();
-                };
-
-                audio.onerror = (e) => {
-                    console.warn("[Cloned Audio Playback Error]", e);
-                    URL.revokeObjectURL(audioUrl);
-                    currentClonedAudio = null;
-                    if (targetEl) targetEl.innerHTML = formatMarkdown(text);
-                    fallbackBrowserTTS(cleaned);
-                };
-
-                // REVEAL TEXT AND PLAY AUDIO AT THE EXACT SAME INSTANT!
-                if (targetEl) {
-                    targetEl.innerHTML = `
-                        <div class="voice-audio-badge">
-                            <span class="voice-pulse-dot"></span>
-                            <span>Pankaj Cloned Voice</span>
-                        </div>
-                        <div class="voice-text-body">
-                            ${formatMarkdown(text)}
-                        </div>
-                    `;
-                    const chatBox = document.getElementById("chat-box");
-                    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-                }
-
-                await audio.play();
-
             } catch (err) {
-                console.warn("[Cloned Voice Notice] Falling back to browser speech synthesis:", err);
-                if (targetEl) targetEl.innerHTML = formatMarkdown(text);
-                fallbackBrowserTTS(cleaned);
+                console.warn("[Cloned Voice Queue Notice] Item failed:", item.text, err);
+                item.status = 'failed';
+                if (!isVoicePlaying) {
+                    playNextInVoiceQueue();
+                }
             }
+        }
+
+        function playNextInVoiceQueue() {
+            if (voiceQueue.length === 0) {
+                isVoicePlaying = false;
+                currentAudioItem = null;
+                if (!isStreaming) {
+                    resumeBuddyListening();
+                }
+                return;
+            }
+
+            const nextItem = voiceQueue[0];
+            if (nextItem.status === 'pending') {
+                // Next item in sequence is still downloading; wait for it
+                return;
+            }
+
+            voiceQueue.shift();
+
+            if (nextItem.status === 'failed') {
+                playNextInVoiceQueue();
+                return;
+            }
+
+            isVoicePlaying = true;
+            buddyState = "speaking";
+            currentAudioItem = nextItem;
+
+            updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> "${escapeHtml(nextItem.text.slice(0, 45))}..."`, "speaking");
+
+            // Pause microphone recognition while audio is playing
+            if (buddyRecognition) {
+                try { buddyRecognition.stop(); } catch (e) {}
+            }
+
+            nextItem.audio.onended = () => {
+                if (nextItem.url) URL.revokeObjectURL(nextItem.url);
+                currentAudioItem = null;
+                playNextInVoiceQueue();
+            };
+
+            nextItem.audio.onerror = (e) => {
+                console.warn("[Cloned Audio Playback Notice]", e);
+                if (nextItem.url) URL.revokeObjectURL(nextItem.url);
+                currentAudioItem = null;
+                playNextInVoiceQueue();
+            };
+
+            nextItem.audio.play().catch(e => {
+                console.warn("[Audio Play Promise Notice]", e);
+                if (nextItem.url) URL.revokeObjectURL(nextItem.url);
+                currentAudioItem = null;
+                playNextInVoiceQueue();
+            });
         }
 
         function fallbackBrowserTTS(text) {
@@ -3276,8 +3339,16 @@
             const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.name.includes("India") || v.name.includes("Google") || v.name.includes("Natural"));
             if (preferredVoice) utterance.voice = preferredVoice;
 
-            utterance.onend = () => { resumeBuddyListening(); };
-            utterance.onerror = () => { resumeBuddyListening(); };
+            utterance.onend = () => {
+                if (!isVoicePlaying && voiceQueue.length === 0) {
+                    resumeBuddyListening();
+                }
+            };
+            utterance.onerror = () => {
+                if (!isVoicePlaying && voiceQueue.length === 0) {
+                    resumeBuddyListening();
+                }
+            };
             window.speechSynthesis.speak(utterance);
         }
 
