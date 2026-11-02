@@ -630,6 +630,131 @@
             background: rgba(255, 255, 255, 0.08);
         }
 
+        /* --- Hello Buddy (JARVIS Mode) Styles --- */
+        .buddy-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.32);
+            color: #c7d2fe;
+            transition: all 0.25s ease;
+        }
+
+        .buddy-toggle-btn:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.55);
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .buddy-toggle-btn.active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(99, 102, 241, 0.25) 100%);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .buddy-banner {
+            margin: 0 24px 10px;
+            padding: 9px 16px;
+            border-radius: var(--radius-md);
+            background: rgba(15, 17, 28, 0.92);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            animation: slideUpBuddy 0.25s ease;
+            z-index: 10;
+        }
+
+        @keyframes slideUpBuddy {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .buddy-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .buddy-banner-text {
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .buddy-banner-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .buddy-badge {
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.18);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        .buddy-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+
+        .buddy-close-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .buddy-wave {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 16px;
+        }
+
+        .buddy-wave span {
+            width: 3px;
+            height: 6px;
+            background: #818cf8;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .buddy-wave.active span {
+            background: #6ee7b7;
+            animation: buddyWaveAnim 0.75s ease-in-out infinite alternate;
+        }
+
+        .buddy-wave.active span:nth-child(1) { height: 14px; animation-delay: 0.0s; }
+        .buddy-wave.active span:nth-child(2) { height: 18px; animation-delay: 0.18s; }
+        .buddy-wave.active span:nth-child(3) { height: 12px; animation-delay: 0.36s; }
+        .buddy-wave.active span:nth-child(4) { height: 16px; animation-delay: 0.12s; }
+
+        .buddy-wave.speaking span {
+            background: #38bdf8;
+            animation: buddyWaveAnim 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes buddyWaveAnim {
+            0% { transform: scaleY(0.4); }
+            100% { transform: scaleY(1.35); }
+        }
+
         /* Chat Area */
         .chat-box {
             flex: 1;
@@ -1579,6 +1704,16 @@
             </div>
 
             <div class="topbar-right">
+                <button class="icon-btn buddy-toggle-btn" id="buddy-toggle-btn" onclick="toggleBuddyVoiceMode()" title="Toggle 'Hello Buddy' Hands-free Voice Mode">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span id="buddy-toggle-label">Hello Buddy</span>
+                </button>
+
                 <button class="icon-btn" onclick="openArchModal()" title="View RAG Architecture Flow">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2">
                         <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
@@ -1617,6 +1752,20 @@
         <section class="chat-box" id="chat-box">
             <!-- Messages rendered dynamically -->
         </section>
+
+        <!-- Buddy Voice Assistant Floating Banner -->
+        <div class="buddy-banner" id="buddy-banner" style="display: none;">
+            <div class="buddy-banner-left">
+                <div class="buddy-wave" id="buddy-wave">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <span class="buddy-banner-text" id="buddy-banner-text">Standby. Say <strong>"Hello Buddy"</strong> to ask anything...</span>
+            </div>
+            <div class="buddy-banner-right">
+                <span class="buddy-badge">JARVIS Voice</span>
+                <button class="buddy-close-btn" onclick="toggleBuddyVoiceMode(false)" title="Turn off Buddy Voice Mode">✕</button>
+            </div>
+        </div>
 
         <!-- Input Box Area -->
         <footer class="input-container">
@@ -2600,6 +2749,16 @@
                 saveThreadsLocally();
                 saveThreadToServer(thread);
 
+                // Auto-TTS for Hello Buddy Hands-free Mode
+                if (isBuddyVoiceQuery) {
+                    if (isTextOnlyRequested(question)) {
+                        updateBuddyBanner(`Displayed in text (as requested)`, "standby");
+                        setTimeout(() => { resumeBuddyListening(); }, 2000);
+                    } else {
+                        speakBuddyResponse(fullText);
+                    }
+                }
+
             } catch (error) {
                 if (contentEl) {
                     contentEl.innerHTML = `<span style="color:var(--danger);">Error: ${escapeHtml(error.message)}</span>`;
@@ -2611,6 +2770,10 @@
                 });
                 saveThreadsLocally();
                 saveThreadToServer(thread);
+
+                if (isBuddyVoiceQuery) {
+                    speakBuddyResponse(`Sorry, an error occurred: ${error.message}`);
+                }
             } finally {
                 isStreaming = false;
                 typingIndicator.style.display = "none";
@@ -2793,6 +2956,303 @@
                 } catch (e) {
                     console.warn("Recognition start error:", e);
                 }
+            }
+        }
+
+        // =========================================================================
+        // --- "HELLO BUDDY" HANDS-FREE VOICE ASSISTANT ENGINE (JARVIS MODE) ---
+        // =========================================================================
+        let isBuddyModeActive = false;
+        let buddyState = "standby"; // "standby" (waiting for "Hello Buddy"), "listening" (hearing question), "speaking" (AI TTS)
+        let buddyRecognition = null;
+        let buddySilenceTimer = null;
+        let isBuddyVoiceQuery = false;
+
+        function playActivationChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                const t = ctx.currentTime;
+                osc.frequency.setValueAtTime(523.25, t); // C5
+                osc.frequency.exponentialRampToValueAtTime(783.99, t + 0.12); // G5
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                osc.start(t);
+                osc.stop(t + 0.35);
+            } catch (e) {
+                console.warn("Chime error:", e);
+            }
+        }
+
+        function playDeactivationChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                const t = ctx.currentTime;
+                osc.frequency.setValueAtTime(659.25, t); // E5
+                osc.frequency.exponentialRampToValueAtTime(440.00, t + 0.14); // A4
+                gain.gain.setValueAtTime(0.18, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+                osc.start(t);
+                osc.stop(t + 0.3);
+            } catch (e) {}
+        }
+
+        function updateBuddyBanner(text, mode = "standby") {
+            const banner = document.getElementById("buddy-banner");
+            const textEl = document.getElementById("buddy-banner-text");
+            const waveEl = document.getElementById("buddy-wave");
+            if (!banner || !textEl || !waveEl) return;
+
+            textEl.innerHTML = text;
+            waveEl.className = "buddy-wave " + (mode === "listening" ? "active" : mode === "speaking" ? "speaking" : "");
+        }
+
+        function isTextOnlyRequested(query) {
+            if (!query) return false;
+            const q = query.toLowerCase();
+            const keywords = [
+                "text only", "text mein", "in text", "text me", "sirf text", 
+                "likh ke", "likh kar", "don't speak", "dont speak", "do not speak",
+                "bina bole", "text me do", "text mein do", "text me btao", "text mein btao", "text me batao"
+            ];
+            return keywords.some(k => q.includes(k));
+        }
+
+        function cleanTextForSpeech(text) {
+            if (!text) return "";
+            return text
+                .replace(/```[\s\S]*?```/g, "Code snippet omitted.")
+                .replace(/`([^`]+)`/g, "$1")
+                .replace(/[*_~#>-]/g, " ")
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+                .replace(/https?:\/\/\S+/g, "")
+                .replace(/\n+/g, ". ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function initBuddyRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Brave.");
+                return null;
+            }
+
+            const rec = new SpeechRecognition();
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.lang = 'en-IN'; // Multi-lingual friendly (English & Hinglish)
+
+            rec.onstart = () => {
+                console.log("[Buddy Voice] Continuous recognition online.");
+            };
+
+            rec.onresult = (event) => {
+                if (!isBuddyModeActive || isStreaming || buddyState === "speaking") return;
+
+                let interimTranscript = "";
+                let finalTranscript = "";
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + " ";
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                const fullRaw = (finalTranscript + interimTranscript).trim().toLowerCase();
+                if (!fullRaw) return;
+
+                // Wake-word pattern: "hello buddy", "hey buddy", "hi buddy", "ok buddy", "buddy", "हेलो बडी", "हेल्लो बडी"
+                const wakeWordPattern = /(hello buddy|hey buddy|hi buddy|ok buddy|हेलो बडी|हेल्लो बडी|\bbuddy\b)/i;
+
+                if (buddyState === "standby") {
+                    if (wakeWordPattern.test(fullRaw)) {
+                        // Wake word detected!
+                        playActivationChime();
+                        buddyState = "listening";
+                        isBuddyVoiceQuery = true;
+                        updateBuddyBanner(`🎙️ <strong>Buddy is listening!</strong> Speak your question now...`, "listening");
+
+                        // Check if user spoke question in the same breath (e.g. "Hello buddy what is my name")
+                        const queryAfterWake = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|हेलो बडी|हेल्लो बडी|\bbuddy\b)/i, "").trim();
+                        const inputField = document.getElementById("user-input");
+                        if (queryAfterWake.length > 2) {
+                            inputField.value = queryAfterWake;
+                            autoResizeTextarea(inputField);
+                            startBuddySilenceTimer();
+                        } else {
+                            inputField.value = "";
+                        }
+                    }
+                } else if (buddyState === "listening") {
+                    // Cancel commands
+                    if (fullRaw.includes("stop") || fullRaw.includes("cancel") || fullRaw.includes("never mind") || fullRaw.includes("bye buddy") || fullRaw.includes("रुक जाओ")) {
+                        playDeactivationChime();
+                        buddyState = "standby";
+                        isBuddyVoiceQuery = false;
+                        document.getElementById("user-input").value = "";
+                        updateBuddyBanner(`Standby. Say <strong>"Hello Buddy"</strong> to ask anything...`, "standby");
+                        if (buddySilenceTimer) clearTimeout(buddySilenceTimer);
+                        return;
+                    }
+
+                    // Capture user question
+                    const inputField = document.getElementById("user-input");
+                    let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|हेलो बडी|हेल्लो बडी|\bbuddy\b)/i, "").trim();
+                    if (!cleanQuery) cleanQuery = fullRaw;
+
+                    inputField.value = cleanQuery;
+                    autoResizeTextarea(inputField);
+                    startBuddySilenceTimer();
+                }
+            };
+
+            rec.onerror = (event) => {
+                console.warn("[Buddy Voice] Speech recognition notice:", event.error);
+                if (event.error === 'not-allowed') {
+                    alert("Microphone permission denied. Please allow microphone access in your browser address bar.");
+                    toggleBuddyVoiceMode(false);
+                }
+            };
+
+            rec.onend = () => {
+                // Automatically restart listening if still in active standby mode
+                if (isBuddyModeActive && buddyState !== "speaking") {
+                    try {
+                        rec.start();
+                    } catch (e) {
+                        // Ignore transient start errors
+                    }
+                }
+            };
+
+            return rec;
+        }
+
+        function startBuddySilenceTimer() {
+            if (buddySilenceTimer) clearTimeout(buddySilenceTimer);
+            buddySilenceTimer = setTimeout(() => {
+                const inputField = document.getElementById("user-input");
+                const q = inputField ? inputField.value.trim() : "";
+                if (q.length > 1 && !isStreaming) {
+                    updateBuddyBanner(`Thinking... Grounding with university documents...`, "listening");
+                    sendMessage();
+                }
+            }, 1300); // 1.3 seconds of silence triggers auto-send without button click
+        }
+
+        function speakBuddyResponse(text) {
+            if (!window.speechSynthesis) {
+                resumeBuddyListening();
+                return;
+            }
+
+            const cleaned = cleanTextForSpeech(text);
+            if (!cleaned) {
+                resumeBuddyListening();
+                return;
+            }
+
+            buddyState = "speaking";
+            updateBuddyBanner(`🔊 <strong>Buddy is speaking:</strong> "${cleaned.slice(0, 65)}..."`, "speaking");
+
+            // Pause microphone recognition while AI speaks to prevent audio feedback loop
+            if (buddyRecognition) {
+                try { buddyRecognition.stop(); } catch (e) {}
+            }
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(cleaned);
+            utterance.rate = 1.05;
+
+            // Pick natural Indian English or Google voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.name.includes("India") || v.name.includes("Google") || v.name.includes("Natural"));
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            utterance.onend = () => {
+                resumeBuddyListening();
+            };
+
+            utterance.onerror = () => {
+                resumeBuddyListening();
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function resumeBuddyListening() {
+            buddyState = "standby";
+            isBuddyVoiceQuery = false;
+            updateBuddyBanner(`Standby. Say <strong>"Hello Buddy"</strong> to ask anything...`, "standby");
+
+            if (isBuddyModeActive && buddyRecognition) {
+                try {
+                    buddyRecognition.start();
+                } catch (e) {}
+            }
+        }
+
+        function toggleBuddyVoiceMode(forceState = null) {
+            const nextState = forceState !== null ? forceState : !isBuddyModeActive;
+            isBuddyModeActive = nextState;
+
+            const btn = document.getElementById("buddy-toggle-btn");
+            const banner = document.getElementById("buddy-banner");
+
+            if (isBuddyModeActive) {
+                if (!buddyRecognition) {
+                    buddyRecognition = initBuddyRecognition();
+                }
+                if (!buddyRecognition) {
+                    isBuddyModeActive = false;
+                    return;
+                }
+
+                try {
+                    buddyRecognition.start();
+                } catch (e) {
+                    console.warn("Recognition already active or start error:", e);
+                }
+
+                playActivationChime();
+                buddyState = "standby";
+                if (btn) btn.classList.add("active");
+                if (banner) banner.style.display = "flex";
+                updateBuddyBanner(`Standby. Say <strong>"Hello Buddy"</strong> to ask anything...`, "standby");
+
+            } else {
+                if (buddyRecognition) {
+                    try { buddyRecognition.stop(); } catch (e) {}
+                }
+                if (window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                }
+                if (buddySilenceTimer) {
+                    clearTimeout(buddySilenceTimer);
+                }
+
+                playDeactivationChime();
+                buddyState = "standby";
+                isBuddyVoiceQuery = false;
+                if (btn) btn.classList.remove("active");
+                if (banner) banner.style.display = "none";
             }
         }
 
