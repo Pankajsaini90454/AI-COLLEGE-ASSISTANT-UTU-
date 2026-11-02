@@ -1988,7 +1988,6 @@
         let activeThreadId = null;
         let isStreaming = false;
         let currentStreamAbortController = null;
-        let lastAssistantResponseText = "";
         let currentUtterance = null;
         let activeSpeakerBtn = null;
 
@@ -2812,32 +2811,26 @@
                                 voiceSentenceBuffer += parsed.text;
                                 let match;
                                 while (true) {
+                                    // High-priority sentence endings: . ? ! । ॥ or newline
                                     match = voiceSentenceBuffer.match(/([.?!।॥]+(?:\s+|$)|[\n\r]+)/);
-                                    if (match) {
-                                        const cutIdx = match.index + match[0].length;
-                                        // Avoid cutting tiny 2-3 word exclamations (e.g. "Sab badhiya!") unless buffer has at least 30 chars
-                                        if (cutIdx >= 30 || voiceSentenceBuffer.length >= 60) {
-                                            const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
-                                            voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
-                                            if (sentence && sentence.length > 2) {
-                                                queueSentenceForTTS(sentence);
-                                            }
-                                            continue;
-                                        }
+
+                                    // Rapid First-Audio Trigger: If nothing is playing or queued yet, trigger on comma/colon after just 20 chars!
+                                    const isFirstChunk = (voiceQueue.length === 0 && !isVoicePlaying);
+                                    if (!match && isFirstChunk && voiceSentenceBuffer.length > 20) {
+                                        match = voiceSentenceBuffer.match(/([,:;—–-]+(?:\s+|$))/);
                                     }
-                                    if (voiceSentenceBuffer.length > 80) {
-                                        const commaMatch = voiceSentenceBuffer.match(/([,:;—–-]+(?:\s+|$))/);
-                                        if (commaMatch) {
-                                            const cutIdx = commaMatch.index + commaMatch[0].length;
-                                            const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
-                                            voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
-                                            if (sentence && sentence.length > 2) {
-                                                queueSentenceForTTS(sentence);
-                                            }
-                                            continue;
-                                        }
+                                    // For subsequent chunks, if a sentence is long (> 65 chars), split on comma/semicolon
+                                    if (!match && voiceSentenceBuffer.length > 65) {
+                                        match = voiceSentenceBuffer.match(/([,:;—–-]+(?:\s+|$))/);
                                     }
-                                    break;
+
+                                    if (!match) break;
+                                    const cutIdx = match.index + match[0].length;
+                                    const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
+                                    voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
+                                    if (sentence && sentence.length > 2) {
+                                        queueSentenceForTTS(sentence);
+                                    }
                                 }
                             }
                         }
@@ -2869,8 +2862,6 @@
                 if (!fullText) {
                     throw new Error("Empty response received from the assistant.");
                 }
-
-                lastAssistantResponseText = fullText;
 
                 // Add to persistent thread
                 thread.messages.push({
@@ -2936,16 +2927,8 @@
             }
         }
 
-        // Global hotkeys: Ctrl+N (New Chat), Ctrl+B (Toggle Sidebar), Space/Escape to Stop Voice
+        // Global hotkeys: Ctrl+N (New Chat), Ctrl+B (Toggle Sidebar)
         document.addEventListener("keydown", (e) => {
-            if (isVoicePlaying && (e.key === "Escape" || e.code === "Space")) {
-                const activeTag = document.activeElement?.tagName?.toLowerCase();
-                if (activeTag !== "textarea" && activeTag !== "input") {
-                    e.preventDefault();
-                    interruptAndStopSpeaking();
-                    return;
-                }
-            }
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
                 e.preventDefault();
                 handleNewChatClick();
@@ -3202,27 +3185,6 @@
                 .trim();
         }
 
-        // --- Acoustic Feedback / Self-Echo Detection Guard ---
-        function isSelfEcho(query, lastResponse) {
-            if (!query || !lastResponse) return false;
-            const qClean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
-            const rClean = lastResponse.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
-
-            const qWords = qClean.split(/\s+/).filter(w => w.length > 2);
-            if (qWords.length < 3) return false;
-
-            const rWords = new Set(rClean.split(/\s+/).filter(w => w.length > 2));
-            if (rWords.size === 0) return false;
-
-            let matchCount = 0;
-            for (const w of qWords) {
-                if (rWords.has(w)) matchCount++;
-            }
-
-            const matchRatio = matchCount / qWords.length;
-            return matchRatio >= 0.45; // If 45%+ words match AI's previous reply, it's a speaker echo!
-        }
-
         // --- Fast Stop, Pause & Interruption Command Detection ---
         function isStopOrExitCommand(text) {
             if (!text) return false;
@@ -3248,7 +3210,7 @@
 
         // --- Immediate Barge-In Interruption Handler ---
         function interruptAndStopSpeaking() {
-            console.log("[Buddy Voice] Interruption triggered: halting playback immediately.");
+            console.log("[Buddy Voice] Interruption triggered: halting playback and streaming immediately.");
 
             // 1. Abort ongoing Gemini streaming fetch immediately
             if (currentStreamAbortController) {
@@ -3271,8 +3233,12 @@
 
             // 4. Update UI and play chime
             playDeactivationChime();
-            onAllAudioFinished();
-            updateBuddyBanner(`⏹️ <strong>Stopped.</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+            updateBuddyBanner(`⏹️ <strong>Stopped.</strong> Say <em>"Hello Buddy"</em> or ask your next question...`, "listening");
+
+            // 5. Automatically resume listening for user's next question after brief pause
+            setTimeout(() => {
+                resumeBuddyListening();
+            }, 500);
         }
 
         // --- Full Deactivation of Voice Assistant Mode ---
@@ -3310,11 +3276,10 @@
         // --- PARALLEL SENTENCE AUDIO QUEUE (FAST STREAMING ORDERED TTS) ---
         // =========================================================================
         let voiceQueue = [];
-        let isAudioCurrentlyPlaying = false;
+        let isVoicePlaying = false;
         let currentAudioItem = null;
         let voiceSentenceBuffer = "";
         let nextQueueId = 0;
-        let ignoreAudioUntil = 0;
 
         function resetVoiceQueue() {
             if (currentAudioItem && currentAudioItem.audio) {
@@ -3333,7 +3298,7 @@
                 }
             });
             voiceQueue = [];
-            isAudioCurrentlyPlaying = false;
+            isVoicePlaying = false;
             voiceSentenceBuffer = "";
             nextQueueId = 0;
             const stopBtn = document.getElementById("buddy-stop-btn");
@@ -3373,13 +3338,13 @@
                 item.audio = new Audio(item.url);
                 item.status = 'ready';
 
-                if (!isAudioCurrentlyPlaying) {
+                if (!isVoicePlaying) {
                     playNextInVoiceQueue();
                 }
             } catch (err) {
                 console.warn("[Cloned Voice Queue Notice] Item failed:", item.text, err);
                 item.status = 'failed';
-                if (!isAudioCurrentlyPlaying) {
+                if (!isVoicePlaying) {
                     playNextInVoiceQueue();
                 }
             }
@@ -3387,13 +3352,19 @@
 
         function playNextInVoiceQueue() {
             if (voiceQueue.length === 0) {
-                onAllAudioFinished();
+                isVoicePlaying = false;
+                currentAudioItem = null;
+                const stopBtn = document.getElementById("buddy-stop-btn");
+                if (stopBtn) stopBtn.style.display = "none";
+                if (!isStreaming) {
+                    resumeBuddyListening();
+                }
                 return;
             }
 
             const nextItem = voiceQueue[0];
             if (nextItem.status === 'pending') {
-                // Next item still downloading; when download completes it will trigger playNextInVoiceQueue()
+                // Next item in sequence is still downloading; wait for it
                 return;
             }
 
@@ -3404,7 +3375,7 @@
                 return;
             }
 
-            isAudioCurrentlyPlaying = true;
+            isVoicePlaying = true;
             buddyState = "speaking";
             currentAudioItem = nextItem;
 
@@ -3413,15 +3384,11 @@
 
             updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> "${escapeHtml(nextItem.text.slice(0, 45))}..."`, "speaking");
 
-            // KEEP MIC RUNNING so user can say "Stop" / "रुक जाओ"!
-            if (buddyRecognition) {
-                try { buddyRecognition.start(); } catch (e) {}
-            }
+            // CRITICAL FOR BARGE-IN: KEEP MICROPHONE RUNNING so user can say "Stop" or "Ruk jao" anytime!
 
             nextItem.audio.onended = () => {
                 if (nextItem.url) URL.revokeObjectURL(nextItem.url);
                 currentAudioItem = null;
-                isAudioCurrentlyPlaying = false;
                 playNextInVoiceQueue();
             };
 
@@ -3429,7 +3396,6 @@
                 console.warn("[Cloned Audio Playback Notice]", e);
                 if (nextItem.url) URL.revokeObjectURL(nextItem.url);
                 currentAudioItem = null;
-                isAudioCurrentlyPlaying = false;
                 playNextInVoiceQueue();
             };
 
@@ -3437,51 +3403,30 @@
                 console.warn("[Audio Play Promise Notice]", e);
                 if (nextItem.url) URL.revokeObjectURL(nextItem.url);
                 currentAudioItem = null;
-                isAudioCurrentlyPlaying = false;
                 playNextInVoiceQueue();
             });
         }
 
-        function onAllAudioFinished() {
-            isAudioCurrentlyPlaying = false;
-            currentAudioItem = null;
-            const stopBtn = document.getElementById("buddy-stop-btn");
-            if (stopBtn) stopBtn.style.display = "none";
-
-            buddyState = "listening";
-            isBuddyVoiceQuery = true;
-            ignoreAudioUntil = Date.now() + 450; // ignore room acoustic echo for 450ms
-
-            const inputField = document.getElementById("user-input");
-            if (inputField) inputField.value = "";
-
-            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
-
-            if (buddyRecognition) {
-                try { buddyRecognition.start(); } catch (e) {}
-            }
-        }
-
         function fallbackBrowserTTS(text) {
             if (!window.speechSynthesis) {
-                onAllAudioFinished();
+                resumeBuddyListening();
                 return;
             }
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.0;
+            utterance.rate = 1.05;
             const voices = window.speechSynthesis.getVoices();
             const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.name.includes("India") || v.name.includes("Google") || v.name.includes("Natural"));
             if (preferredVoice) utterance.voice = preferredVoice;
 
             utterance.onend = () => {
-                if (voiceQueue.length === 0) {
-                    onAllAudioFinished();
+                if (!isVoicePlaying && voiceQueue.length === 0) {
+                    resumeBuddyListening();
                 }
             };
             utterance.onerror = () => {
-                if (voiceQueue.length === 0) {
-                    onAllAudioFinished();
+                if (!isVoicePlaying && voiceQueue.length === 0) {
+                    resumeBuddyListening();
                 }
             };
             window.speechSynthesis.speak(utterance);
@@ -3489,7 +3434,17 @@
 
         function resumeBuddyListening() {
             if (!isBuddyModeActive) return;
-            onAllAudioFinished();
+
+            // CRITICAL: Stays in active listening mode so user does NOT have to repeat "Hello Buddy"!
+            buddyState = "listening";
+            isBuddyVoiceQuery = true;
+            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+
+            if (buddyRecognition) {
+                try {
+                    buddyRecognition.start();
+                } catch (e) {}
+            }
         }
 
         function startBuddySilenceTimer(isFinalResult = false) {
@@ -3543,20 +3498,14 @@
                 if (!fullRaw) return;
 
                 // 1. BARGE-IN / INTERRUPTION: If AI is talking or streaming, check for STOP / EXIT command!
-                if (buddyState === "speaking" || isStreaming || isAudioCurrentlyPlaying) {
+                if (buddyState === "speaking" || isStreaming || isVoicePlaying) {
                     if (isStopOrExitCommand(fullRaw)) {
-                        console.log("[Buddy Voice] User shouted STOP during playback!");
                         interruptAndStopSpeaking();
                     }
                     return; // Ignore general chatter during AI speech so it doesn't self-transcribe
                 }
 
-                // 2. Reject speaker reverb right after audio stops:
-                if (Date.now() < ignoreAudioUntil) {
-                    return;
-                }
-
-                // 3. CHECK STOP / EXIT COMMAND (when not speaking)
+                // 2. CHECK STOP / EXIT COMMAND (when not speaking)
                 if (isStopOrExitCommand(fullRaw)) {
                     stopBuddyVoiceAssistant(true);
                     return;
@@ -3599,12 +3548,6 @@
                     cleanQuery = cleanQuery.replace(/^[,\-–—\s]+/, "");
 
                     if (cleanQuery.length > 1) {
-                        // ACOUSTIC ECHO FILTER: Reject if microphone transcribed AI's own voice
-                        if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {
-                            console.log("[Buddy Voice] Acoustic speaker echo detected and rejected:", cleanQuery);
-                            return;
-                        }
-
                         const inputField = document.getElementById("user-input");
                         inputField.value = cleanQuery;
                         autoResizeTextarea(inputField);
@@ -3622,7 +3565,7 @@
             };
 
             rec.onend = () => {
-                // Automatically keep recognition alive if voice assistant is active!
+                // Automatically keep recognition alive if voice assistant is active (including standby or speaking)
                 if (isBuddyModeActive) {
                     try {
                         rec.start();
