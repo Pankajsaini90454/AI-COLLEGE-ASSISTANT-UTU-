@@ -1,10 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import StreamingResponse, FileResponse, Response
 from pydantic import BaseModel
 import os
 import shutil
 import json
+import re
+import httpx
 from datetime import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -482,6 +484,51 @@ Student's Latest Message: {user_question}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# --- CUSTOM CLONED VOICE TTS (FISH AUDIO MULTILINGUAL) ---
+class TTSRequest(BaseModel):
+    text: str
+
+@app.post("/tts")
+async def generate_cloned_tts(request: TTSRequest):
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text cannot be empty")
+
+    api_key = os.getenv("FISH_AUDIO_API_KEY", "sk-fish-uZFISpcxIwwKBFQX_9ni3LpEqKzkm7K62fuvXI6x4TM")
+    voice_id = os.getenv("FISH_AUDIO_VOICE_ID", "9e338294a69a49f78c1c9f03f7bb2802")
+
+    # Clean text: remove markdown artifacts, code snippets, URLs
+    cleaned = re.sub(r'```[\s\S]*?```', '', text)
+    cleaned = re.sub(r'https?://\S+', '', cleaned)
+    cleaned = re.sub(r'[*_~#>`\[\]\(\)]', '', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    if not cleaned:
+        cleaned = text[:200]
+
+    url = "https://api.fish.audio/v1/tts"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "model": "s2.1-pro-free"
+    }
+    payload = {
+        "text": cleaned,
+        "reference_id": voice_id
+    }
+
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        try:
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code == 200:
+                return Response(content=resp.content, media_type="audio/mpeg")
+            else:
+                print(f"[Fish Audio Error] status={resp.status_code} text={resp.text[:250]}")
+                raise HTTPException(status_code=resp.status_code, detail=f"TTS generation error ({resp.status_code})")
+        except Exception as e:
+            print(f"[Fish Audio Exception] {e}")
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
