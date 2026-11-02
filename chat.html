@@ -1988,6 +1988,7 @@
         let activeThreadId = null;
         let isStreaming = false;
         let currentStreamAbortController = null;
+        let lastAssistantResponseText = "";
         let currentUtterance = null;
         let activeSpeakerBtn = null;
 
@@ -2863,6 +2864,8 @@
                     throw new Error("Empty response received from the assistant.");
                 }
 
+                lastAssistantResponseText = fullText;
+
                 // Add to persistent thread
                 thread.messages.push({
                     role: "assistant",
@@ -2927,8 +2930,16 @@
             }
         }
 
-        // Global hotkeys: Ctrl+N (New Chat), Ctrl+B (Toggle Sidebar)
+        // Global hotkeys: Ctrl+N (New Chat), Ctrl+B (Toggle Sidebar), Space/Escape to Stop Voice
         document.addEventListener("keydown", (e) => {
+            if (isVoicePlaying && (e.key === "Escape" || e.code === "Space")) {
+                const activeTag = document.activeElement?.tagName?.toLowerCase();
+                if (activeTag !== "textarea" && activeTag !== "input") {
+                    e.preventDefault();
+                    interruptAndStopSpeaking();
+                    return;
+                }
+            }
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
                 e.preventDefault();
                 handleNewChatClick();
@@ -3185,6 +3196,27 @@
                 .trim();
         }
 
+        // --- Acoustic Feedback / Self-Echo Detection Guard ---
+        function isSelfEcho(query, lastResponse) {
+            if (!query || !lastResponse) return false;
+            const qClean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+            const rClean = lastResponse.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+
+            const qWords = qClean.split(/\s+/).filter(w => w.length > 2);
+            if (qWords.length < 3) return false;
+
+            const rWords = new Set(rClean.split(/\s+/).filter(w => w.length > 2));
+            if (rWords.size === 0) return false;
+
+            let matchCount = 0;
+            for (const w of qWords) {
+                if (rWords.has(w)) matchCount++;
+            }
+
+            const matchRatio = matchCount / qWords.length;
+            return matchRatio >= 0.45; // If 45%+ words match AI's previous reply, it's a speaker echo!
+        }
+
         // --- Fast Stop, Pause & Interruption Command Detection ---
         function isStopOrExitCommand(text) {
             if (!text) return false;
@@ -3384,7 +3416,10 @@
 
             updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> "${escapeHtml(nextItem.text.slice(0, 45))}..."`, "speaking");
 
-            // CRITICAL FOR BARGE-IN: KEEP MICROPHONE RUNNING so user can say "Stop" or "Ruk jao" anytime!
+            // CRITICAL: Mute microphone while laptop speaker is playing audio to prevent acoustic feedback loop!
+            if (buddyRecognition) {
+                try { buddyRecognition.abort(); } catch (e) {}
+            }
 
             nextItem.audio.onended = () => {
                 if (nextItem.url) URL.revokeObjectURL(nextItem.url);
@@ -3435,16 +3470,19 @@
         function resumeBuddyListening() {
             if (!isBuddyModeActive) return;
 
-            // CRITICAL: Stays in active listening mode so user does NOT have to repeat "Hello Buddy"!
-            buddyState = "listening";
-            isBuddyVoiceQuery = true;
-            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+            // Wait 350ms after audio finishes so room acoustic echo fully clears!
+            setTimeout(() => {
+                if (!isBuddyModeActive || isVoicePlaying) return;
+                buddyState = "listening";
+                isBuddyVoiceQuery = true;
+                updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
 
-            if (buddyRecognition) {
-                try {
-                    buddyRecognition.start();
-                } catch (e) {}
-            }
+                if (buddyRecognition) {
+                    try {
+                        buddyRecognition.start();
+                    } catch (e) {}
+                }
+            }, 350);
         }
 
         function startBuddySilenceTimer(isFinalResult = false) {
@@ -3548,6 +3586,12 @@
                     cleanQuery = cleanQuery.replace(/^[,\-–—\s]+/, "");
 
                     if (cleanQuery.length > 1) {
+                        // ACOUSTIC ECHO FILTER: Reject if microphone transcribed AI's own voice
+                        if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {
+                            console.log("[Buddy Voice] Acoustic speaker echo detected and rejected:", cleanQuery);
+                            return;
+                        }
+
                         const inputField = document.getElementById("user-input");
                         inputField.value = cleanQuery;
                         autoResizeTextarea(inputField);
@@ -3565,8 +3609,8 @@
             };
 
             rec.onend = () => {
-                // Automatically keep recognition alive if voice assistant is active (including standby or speaking)
-                if (isBuddyModeActive) {
+                // Automatically keep recognition alive if voice assistant is active, BUT NOT while speaking!
+                if (isBuddyModeActive && !isVoicePlaying && buddyState !== "speaking") {
                     try {
                         rec.start();
                     } catch (e) {
