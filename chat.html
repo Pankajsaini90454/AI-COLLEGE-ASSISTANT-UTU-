@@ -1987,6 +1987,7 @@
         let threads = [];
         let activeThreadId = null;
         let isStreaming = false;
+        let lastAssistantResponseText = "";
         let currentStreamAbortController = null;
         let currentUtterance = null;
         let activeSpeakerBtn = null;
@@ -2864,6 +2865,7 @@
                 }
 
                 // Add to persistent thread
+                lastAssistantResponseText = fullText;
                 thread.messages.push({
                     role: "assistant",
                     content: fullText,
@@ -2908,7 +2910,8 @@
                 saveThreadToServer(thread);
 
                 if (isBuddyVoiceQuery) {
-                    fallbackBrowserTTS(`Sorry, an error occurred: ${error.message}`);
+                    console.error("[Buddy Voice Notice]", error);
+                    resumeBuddyListening();
                 }
             } finally {
                 isStreaming = false;
@@ -3179,38 +3182,67 @@
                 .replace(/\[.*?\]/g, "")
                 .replace(/[*_~#>]/g, " ")
                 .replace(/https?:\/\/\S+/g, "")
+                .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, "")
                 .replace(/[-–—]+/g, " ")
                 .replace(/\n+/g, ". ")
                 .replace(/\s+/g, " ")
                 .trim();
         }
 
-        // --- Fast Stop, Pause & Interruption Command Detection ---
-        function isStopOrExitCommand(text) {
+        // --- Acoustic Feedback / Self-Echo Detection Guard ---
+        function isSelfEcho(query, lastResponse) {
+            if (!query || !lastResponse) return false;
+            const qClean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+            const rClean = lastResponse.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+
+            const qWords = qClean.split(/\s+/).filter(w => w.length > 2);
+            if (qWords.length < 3) return false;
+
+            const rWords = new Set(rClean.split(/\s+/).filter(w => w.length > 2));
+            if (rWords.size === 0) return false;
+
+            let matchCount = 0;
+            for (const w of qWords) {
+                if (rWords.has(w)) matchCount++;
+            }
+
+            const matchRatio = matchCount / qWords.length;
+            return matchRatio >= 0.40; // If 40%+ words match AI's previous reply, it's a speaker echo!
+        }
+
+        // --- Fast Interruption (Stop speaking) vs Exit Detection ---
+        function isInterruptCommand(text) {
             if (!text) return false;
             const t = text.trim().toLowerCase().replace(/[.,!?;:।॥]/g, "");
-            
-            const exactStopPhrases = [
-                "stop", "bye", "goodbye", "good bye", "exit", "quit", "cancel", "pause", "quiet",
-                "bye buddy", "bye-bye", "goodbye buddy", "stop buddy", "stop listening", "stop speaking",
-                "band karo", "ruk jao", "alvida", "chup ho jao", "chup raho", "chup", "khatam karo", "roko",
-                "shut up", "बस", "बाय बडी", "बाय", "अलविदा", "रुक जाओ", "बंद करो", "चुप", "चुप हो जाओ", "चुप रहो", "रोको", "स्टॉप"
+
+            const stopWords = [
+                "stop", "pause", "quiet", "stop speaking", "stop audio",
+                "ruk jao", "ruk ja", "ruko", "chup", "chup ho jao", "chup raho", "band karo", "khatam karo", "roko", "bas karo", "bas",
+                "shut up", "रुक जाओ", "रुक जा", "रुको", "रुक", "चुप", "चुप हो जाओ", "चुप रहो", "बंद करो", "रोको", "स्टॉप", "बस", "बस करो"
             ];
-            if (exactStopPhrases.some(p => t === p || t.startsWith(p + " ") || t.endsWith(" " + p))) return true;
+            if (stopWords.some(w => t === w || t.startsWith(w + " ") || t.endsWith(" " + w))) return true;
+            if (/\b(stop|pause|quiet|ruk\s*jao|ruk\s*ja|ruko|chup|band\s*karo|shut\s*up|roko)\b/i.test(t)) return true;
+            if (/\b(रुक जाओ|रुक जा|रुको|रुक|चुप|स्टॉप|रोको|बस)\b/i.test(t)) return true;
+            return false;
+        }
 
-            if (/\b(stop|bye|exit|cancel|quiet|pause|chup|ruk jao|band karo|shut up)\b/i.test(t)) return true;
-            if (/\b(रुक जाओ|बंद करो|अलविदा|बाय बडी|चुप|स्टॉप|रोको|बस)\b/i.test(t)) return true;
+        function isExitCommand(text) {
+            if (!text) return false;
+            const t = text.trim().toLowerCase().replace(/[.,!?;:।॥]/g, "");
 
-            const words = t.split(/\s+/);
-            if (/^(stop|bye|exit|quit|cancel|pause)\b/i.test(t) && words.length <= 4) return true;
-            if (/\b(stop|bye|exit|pause)$/i.test(t) && words.length <= 4) return true;
-
+            const exitWords = [
+                "bye", "bye buddy", "bye-bye", "goodbye", "goodbye buddy", "good bye", "exit", "quit", "cancel",
+                "alvida", "बाय", "बाय बडी", "अलविदा", "अलविदा बडी"
+            ];
+            if (exitWords.some(w => t === w || t.startsWith(w + " ") || t.endsWith(" " + w))) return true;
+            if (/\b(bye\s*buddy|goodbye\s*buddy|bye-bye|goodbye|alvida|अलविदा|बाय\s*बडी)\b/i.test(t)) return true;
+            if (/^(bye|exit|quit)$/i.test(t)) return true;
             return false;
         }
 
         // --- Immediate Barge-In Interruption Handler ---
         function interruptAndStopSpeaking() {
-            console.log("[Buddy Voice] Interruption triggered: halting playback and streaming immediately.");
+            console.log("[Buddy Voice] Interruption triggered: halting playback immediately.");
 
             // 1. Abort ongoing Gemini streaming fetch immediately
             if (currentStreamAbortController) {
@@ -3231,17 +3263,27 @@
             const sendBtn = document.getElementById("send-btn");
             if (sendBtn) sendBtn.disabled = false;
 
-            // 4. Update UI and play chime
-            playDeactivationChime();
-            updateBuddyBanner(`⏹️ <strong>Stopped.</strong> Say <em>"Hello Buddy"</em> or ask your next question...`, "listening");
+            // 4. Set deaf window to absorb the user's spoken "stop" command
+            ignoreAudioUntil = Date.now() + 1000;
 
-            // 5. Automatically resume listening for user's next question after brief pause
-            setTimeout(() => {
-                resumeBuddyListening();
-            }, 500);
+            // 5. Update UI and play chime
+            playDeactivationChime();
+            isVoicePlaying = false;
+            isAudioCurrentlyPlaying = false;
+            buddyState = "listening";
+            isBuddyVoiceQuery = true;
+
+            const inputField = document.getElementById("user-input");
+            if (inputField) inputField.value = "";
+
+            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+
+            // Flush Chrome speech recognition buffer fresh
+            if (buddyRecognition) {
+                try { buddyRecognition.abort(); } catch (e) {}
+            }
         }
 
-        // --- Full Deactivation of Voice Assistant Mode ---
         function stopBuddyVoiceAssistant(sayFarewell = true) {
             console.log("[Buddy Voice] Shutting down voice assistant completely.");
             if (buddySilenceTimer) {
@@ -3277,9 +3319,12 @@
         // =========================================================================
         let voiceQueue = [];
         let isVoicePlaying = false;
+        let isAudioCurrentlyPlaying = false;
         let currentAudioItem = null;
         let voiceSentenceBuffer = "";
         let nextQueueId = 0;
+        let ignoreAudioUntil = 0;
+        let isRecognitionActive = false;
 
         function resetVoiceQueue() {
             if (currentAudioItem && currentAudioItem.audio) {
@@ -3299,6 +3344,7 @@
             });
             voiceQueue = [];
             isVoicePlaying = false;
+            isAudioCurrentlyPlaying = false;
             voiceSentenceBuffer = "";
             nextQueueId = 0;
             const stopBtn = document.getElementById("buddy-stop-btn");
@@ -3353,11 +3399,21 @@
         function playNextInVoiceQueue() {
             if (voiceQueue.length === 0) {
                 isVoicePlaying = false;
+                isAudioCurrentlyPlaying = false;
                 currentAudioItem = null;
                 const stopBtn = document.getElementById("buddy-stop-btn");
                 if (stopBtn) stopBtn.style.display = "none";
                 if (!isStreaming) {
-                    resumeBuddyListening();
+                    // Flush Chrome buffer of speaker noise:
+                    if (buddyRecognition) {
+                        try { buddyRecognition.abort(); } catch (e) {}
+                    }
+                    ignoreAudioUntil = Date.now() + 600;
+                    buddyState = "listening";
+                    isBuddyVoiceQuery = true;
+                    const inputField = document.getElementById("user-input");
+                    if (inputField) inputField.value = "";
+                    updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
                 }
                 return;
             }
@@ -3376,6 +3432,7 @@
             }
 
             isVoicePlaying = true;
+            isAudioCurrentlyPlaying = true;
             buddyState = "speaking";
             currentAudioItem = nextItem;
 
@@ -3389,6 +3446,8 @@
             nextItem.audio.onended = () => {
                 if (nextItem.url) URL.revokeObjectURL(nextItem.url);
                 currentAudioItem = null;
+                isVoicePlaying = false;
+                isAudioCurrentlyPlaying = false;
                 playNextInVoiceQueue();
             };
 
@@ -3430,6 +3489,14 @@
                 }
             };
             window.speechSynthesis.speak(utterance);
+        }
+
+        function safeStartRecognition() {
+            if (!buddyRecognition || !isBuddyModeActive) return;
+            if (isRecognitionActive) return;
+            try {
+                buddyRecognition.start();
+            } catch (e) {}
         }
 
         function resumeBuddyListening() {
@@ -3474,7 +3541,8 @@
             rec.lang = 'en-IN'; // Multi-lingual friendly (English & Hinglish)
 
             rec.onstart = () => {
-                console.log("[Buddy Voice] Continuous recognition online.");
+                isRecognitionActive = true;
+                console.log("[Buddy Voice] Speech recognition online.");
             };
 
             rec.onresult = (event) => {
@@ -3497,21 +3565,40 @@
                 const fullRaw = (finalTranscript + interimTranscript).trim().toLowerCase();
                 if (!fullRaw) return;
 
-                // 1. BARGE-IN / INTERRUPTION: If AI is talking or streaming, check for STOP / EXIT command!
-                if (buddyState === "speaking" || isStreaming || isVoicePlaying) {
-                    if (isStopOrExitCommand(fullRaw)) {
-                        interruptAndStopSpeaking();
+                // 1. BARGE-IN INTERRUPTION (AI is speaking or streaming):
+                if (buddyState === "speaking" || isStreaming || isVoicePlaying || isAudioCurrentlyPlaying) {
+                    if (isExitCommand(fullRaw)) {
+                        stopBuddyVoiceAssistant(true);
+                        return;
                     }
-                    return; // Ignore general chatter during AI speech so it doesn't self-transcribe
+                    if (isInterruptCommand(fullRaw)) {
+                        console.log("[Buddy Voice] User shouted STOP during playback:", fullRaw);
+                        interruptAndStopSpeaking();
+                        return;
+                    }
+                    // CRITICAL: DROP all speaker output while AI is talking so it NEVER self-transcribes!
+                    return;
                 }
 
-                // 2. CHECK STOP / EXIT COMMAND (when not speaking)
-                if (isStopOrExitCommand(fullRaw)) {
+                // 2. Reject speaker audio reverb in deaf window right after playback:
+                if (Date.now() < ignoreAudioUntil) {
+                    return;
+                }
+
+                // 3. EXIT COMMAND (while listening):
+                if (isExitCommand(fullRaw)) {
                     stopBuddyVoiceAssistant(true);
                     return;
                 }
 
-                // 3. WAKE-WORD DETECTION (From Standby or Inactive Voice mode)
+                // 4. STOP COMMAND (while already listening):
+                if (isInterruptCommand(fullRaw)) {
+                    const inputField = document.getElementById("user-input");
+                    if (inputField) inputField.value = "";
+                    return;
+                }
+
+                // 5. WAKE-WORD DETECTION (From Standby):
                 const wakeWordPattern = /(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i;
 
                 if (buddyState === "standby" || !isBuddyVoiceQuery) {
@@ -3540,14 +3627,19 @@
                     return;
                 }
 
-                // 4. ACTIVE CONVERSATIONAL LISTENING:
+                // 6. ACTIVE CONVERSATIONAL LISTENING:
                 if (buddyState === "listening") {
-                    // Continuous conversation: No need to repeat "Hello Buddy"!
                     let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i, "").trim();
                     if (!cleanQuery) cleanQuery = fullRaw;
-                    cleanQuery = cleanQuery.replace(/^[,\-–—\s]+/, "");
+                    cleanQuery = cleanQuery.replace(/^[,-–—\s]+/, "");
 
                     if (cleanQuery.length > 1) {
+                        // ACOUSTIC ECHO FILTER: Reject if microphone transcribed AI's own voice
+                        if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {
+                            console.log("[Buddy Voice] Acoustic speaker echo detected and rejected:", cleanQuery);
+                            return;
+                        }
+
                         const inputField = document.getElementById("user-input");
                         inputField.value = cleanQuery;
                         autoResizeTextarea(inputField);
@@ -3565,13 +3657,13 @@
             };
 
             rec.onend = () => {
-                // Automatically keep recognition alive if voice assistant is active (including standby or speaking)
+                isRecognitionActive = false;
                 if (isBuddyModeActive) {
-                    try {
-                        rec.start();
-                    } catch (e) {
-                        // Ignore transient start errors
-                    }
+                    setTimeout(() => {
+                        if (isBuddyModeActive && !isRecognitionActive) {
+                            safeStartRecognition();
+                        }
+                    }, 120);
                 }
             };
 

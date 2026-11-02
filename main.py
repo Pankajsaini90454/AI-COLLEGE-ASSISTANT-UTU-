@@ -519,6 +519,7 @@ async def generate_cloned_tts(request: TTSRequest):
     cleaned = re.sub(r'https?://\S+', '', cleaned)
     cleaned = re.sub(r'\[.*?\]', '', cleaned)
     cleaned = re.sub(r'[*_~#>`\(\)]', '', cleaned)
+    cleaned = re.sub(r'[\U00010000-\U0010ffff]', '', cleaned)
     cleaned = re.sub(r'[-–—]+', ' ', cleaned)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     if not cleaned:
@@ -535,10 +536,11 @@ async def generate_cloned_tts(request: TTSRequest):
         "reference_id": voice_id,
         "format": "mp3",
         "normalize": True,
-        "temperature": 0.7,
+        "temperature": 0.25,
         "latency": "balanced",
+        "repetition_penalty": 1.2,
         "prosody": {
-            "speed": 1.05,
+            "speed": 1.0,
             "volume": 0.0
         }
     }
