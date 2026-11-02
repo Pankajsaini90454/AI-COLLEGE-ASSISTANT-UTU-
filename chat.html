@@ -671,8 +671,15 @@
         }
 
         @keyframes slideUpBuddy {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .buddy-banner-left {
@@ -740,10 +747,25 @@
             animation: buddyWaveAnim 0.75s ease-in-out infinite alternate;
         }
 
-        .buddy-wave.active span:nth-child(1) { height: 14px; animation-delay: 0.0s; }
-        .buddy-wave.active span:nth-child(2) { height: 18px; animation-delay: 0.18s; }
-        .buddy-wave.active span:nth-child(3) { height: 12px; animation-delay: 0.36s; }
-        .buddy-wave.active span:nth-child(4) { height: 16px; animation-delay: 0.12s; }
+        .buddy-wave.active span:nth-child(1) {
+            height: 14px;
+            animation-delay: 0.0s;
+        }
+
+        .buddy-wave.active span:nth-child(2) {
+            height: 18px;
+            animation-delay: 0.18s;
+        }
+
+        .buddy-wave.active span:nth-child(3) {
+            height: 12px;
+            animation-delay: 0.36s;
+        }
+
+        .buddy-wave.active span:nth-child(4) {
+            height: 16px;
+            animation-delay: 0.12s;
+        }
 
         .buddy-wave.speaking span {
             background: #38bdf8;
@@ -751,8 +773,13 @@
         }
 
         @keyframes buddyWaveAnim {
-            0% { transform: scaleY(0.4); }
-            100% { transform: scaleY(1.35); }
+            0% {
+                transform: scaleY(0.4);
+            }
+
+            100% {
+                transform: scaleY(1.35);
+            }
         }
 
         /* Voice Mode Synchronized Card */
@@ -794,8 +821,15 @@
         }
 
         @keyframes pulseDot {
-            from { opacity: 0.4; transform: scale(0.85); }
-            to { opacity: 1; transform: scale(1.15); }
+            from {
+                opacity: 0.4;
+                transform: scale(0.85);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.15);
+            }
         }
 
         .voice-wave-anim {
@@ -813,11 +847,30 @@
             animation: buddyWaveAnim 0.7s ease-in-out infinite alternate;
         }
 
-        .voice-wave-anim span:nth-child(1) { height: 10px; animation-delay: 0.0s; }
-        .voice-wave-anim span:nth-child(2) { height: 16px; animation-delay: 0.15s; }
-        .voice-wave-anim span:nth-child(3) { height: 12px; animation-delay: 0.3s; }
-        .voice-wave-anim span:nth-child(4) { height: 18px; animation-delay: 0.1s; }
-        .voice-wave-anim span:nth-child(5) { height: 8px; animation-delay: 0.25s; }
+        .voice-wave-anim span:nth-child(1) {
+            height: 10px;
+            animation-delay: 0.0s;
+        }
+
+        .voice-wave-anim span:nth-child(2) {
+            height: 16px;
+            animation-delay: 0.15s;
+        }
+
+        .voice-wave-anim span:nth-child(3) {
+            height: 12px;
+            animation-delay: 0.3s;
+        }
+
+        .voice-wave-anim span:nth-child(4) {
+            height: 18px;
+            animation-delay: 0.1s;
+        }
+
+        .voice-wave-anim span:nth-child(5) {
+            height: 8px;
+            animation-delay: 0.25s;
+        }
 
         /* Chat Area */
         .chat-box {
@@ -1768,7 +1821,8 @@
             </div>
 
             <div class="topbar-right">
-                <button class="icon-btn buddy-toggle-btn" id="buddy-toggle-btn" onclick="toggleBuddyVoiceMode()" title="Toggle 'Hello Buddy' Hands-free Voice Mode">
+                <button class="icon-btn buddy-toggle-btn" id="buddy-toggle-btn" onclick="toggleBuddyVoiceMode()"
+                    title="Toggle 'Hello Buddy' Hands-free Voice Mode">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -1823,11 +1877,13 @@
                 <div class="buddy-wave" id="buddy-wave">
                     <span></span><span></span><span></span><span></span>
                 </div>
-                <span class="buddy-banner-text" id="buddy-banner-text">Standby. Say <strong>"Hello Buddy"</strong> to ask anything...</span>
+                <span class="buddy-banner-text" id="buddy-banner-text">Standby. Say <strong>"Hello Buddy"</strong> to
+                    ask anything...</span>
             </div>
             <div class="buddy-banner-right">
                 <span class="buddy-badge">Pankaj Voice AI</span>
-                <button class="buddy-close-btn" onclick="stopBuddyVoiceAssistant(false)" title="Turn off Buddy Voice Mode">✕</button>
+                <button class="buddy-close-btn" onclick="stopBuddyVoiceAssistant(false)"
+                    title="Turn off Buddy Voice Mode">✕</button>
             </div>
         </div>
 
@@ -2740,7 +2796,7 @@
                         try {
                             const raw = await response.text();
                             if (raw) errMsg = raw.slice(0, 150);
-                        } catch (_) {}
+                        } catch (_) { }
                     }
                     throw new Error(errMsg);
                 }
@@ -2913,7 +2969,7 @@
                     data = await response.json();
                 } catch (parseErr) {
                     let raw = "";
-                    try { raw = await response.text(); } catch (_) {}
+                    try { raw = await response.text(); } catch (_) { }
                     throw new Error(raw.slice(0, 150) || "Server returned an unexpected response.");
                 }
 
@@ -3092,7 +3148,7 @@
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
                 osc.start(t);
                 osc.stop(t + 0.3);
-            } catch (e) {}
+            } catch (e) { }
         }
 
         function updateBuddyBanner(text, mode = "listening") {
@@ -3109,7 +3165,7 @@
             if (!query) return false;
             const q = query.toLowerCase();
             const keywords = [
-                "text only", "text mein", "in text", "text me", "sirf text", 
+                "text only", "text mein", "in text", "text me", "sirf text",
                 "likh ke", "likh kar", "don't speak", "dont speak", "do not speak",
                 "bina bole", "text me do", "text mein do", "text me btao", "text mein btao", "text me batao"
             ];
@@ -3134,7 +3190,7 @@
         function isStopOrExitCommand(text) {
             if (!text) return false;
             const t = text.trim().toLowerCase().replace(/[.,!?;:]/g, "");
-            
+
             const exactStopPhrases = [
                 "stop", "bye", "goodbye", "good bye", "exit", "quit", "cancel",
                 "bye buddy", "bye-bye", "goodbye buddy", "stop buddy", "stop listening",
@@ -3165,7 +3221,7 @@
             if (inputField) inputField.value = "";
 
             if (currentClonedAudio) {
-                try { currentClonedAudio.pause(); } catch (e) {}
+                try { currentClonedAudio.pause(); } catch (e) { }
                 currentClonedAudio = null;
             }
 
@@ -3203,7 +3259,7 @@
 
             // Pause microphone while speaking
             if (buddyRecognition) {
-                try { buddyRecognition.stop(); } catch (e) {}
+                try { buddyRecognition.stop(); } catch (e) { }
             }
 
             try {
@@ -3221,7 +3277,7 @@
                 const audioUrl = URL.createObjectURL(audioBlob);
 
                 if (currentClonedAudio) {
-                    try { currentClonedAudio.pause(); } catch (e) {}
+                    try { currentClonedAudio.pause(); } catch (e) { }
                     currentClonedAudio = null;
                 }
 
@@ -3294,7 +3350,7 @@
             if (buddyRecognition) {
                 try {
                     buddyRecognition.start();
-                } catch (e) {}
+                } catch (e) { }
             }
         }
 
@@ -3444,7 +3500,7 @@
 
             } else {
                 if (buddyRecognition) {
-                    try { buddyRecognition.stop(); } catch (e) {}
+                    try { buddyRecognition.stop(); } catch (e) { }
                 }
                 if (window.speechSynthesis) {
                     window.speechSynthesis.cancel();
