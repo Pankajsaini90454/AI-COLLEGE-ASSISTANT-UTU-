@@ -13,8 +13,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download lightweight ONNX embedding model into image layer (Memory: ~75MB)
-RUN python -c "from fastembed import TextEmbedding; list(TextEmbedding(model_name='sentence-transformers/all-MiniLM-L6-v2').embed(['init']))"
+# Pre-download lightweight ONNX embedding model into image layer permanently
+RUN mkdir -p /app/fastembed_cache && python -c "from fastembed import TextEmbedding; list(TextEmbedding(model_name='sentence-transformers/all-MiniLM-L6-v2', cache_dir='/app/fastembed_cache').embed(['init']))"
 
 # Copy application files
 COPY . .

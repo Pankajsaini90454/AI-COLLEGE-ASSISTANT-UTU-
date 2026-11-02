@@ -40,11 +40,14 @@ def to_vector(emb):
 
 class LightweightEmbedder:
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+        cache_path = os.getenv("FASTEMBED_CACHE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "fastembed_cache"))
+        os.makedirs(cache_path, exist_ok=True)
         try:
             from fastembed import TextEmbedding
-            print("[Embedding Engine] Initializing FastEmbed (ONNX, ultra-lightweight)...")
+            print(f"[Embedding Engine] Initializing FastEmbed (ONNX, ultra-lightweight) with cache_dir={cache_path}...")
             self._backend = "fastembed"
-            self._model = TextEmbedding(model_name=model_name)
+            self._model = TextEmbedding(model_name=model_name, cache_dir=cache_path)
+            print("[Embedding Engine] FastEmbed loaded successfully!")
         except Exception as e:
             print(f"[Embedding Engine] Fallback to SentenceTransformer: {e}")
             from sentence_transformers import SentenceTransformer
@@ -63,9 +66,21 @@ class LightweightEmbedder:
     def get_embedding_dimension(self):
         return 384
 
-print("Loading embedding model...")
-embedding_model = LightweightEmbedder()
-print("Embedding model loaded successfully!")
+
+# Lazy-loaded singleton proxy so Uvicorn starts instantly without blocking on model download
+_embedding_model_instance = None
+
+def get_embedding_model():
+    global _embedding_model_instance
+    if _embedding_model_instance is None:
+        _embedding_model_instance = LightweightEmbedder()
+    return _embedding_model_instance
+
+class LazyEmbeddingModelProxy:
+    def __getattr__(self, name):
+        return getattr(get_embedding_model(), name)
+
+embedding_model = LazyEmbeddingModelProxy()
 
 app = FastAPI(title="AI College Assistant API")
 
