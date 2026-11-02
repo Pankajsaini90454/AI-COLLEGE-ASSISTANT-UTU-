@@ -755,6 +755,70 @@
             100% { transform: scaleY(1.35); }
         }
 
+        /* Voice Mode Synchronized Card */
+        .voice-audio-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.28);
+            color: #c7d2fe;
+            font-size: 0.88rem;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .voice-audio-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: #6ee7b7;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 3px 9px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .voice-pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulseDot 1s infinite alternate;
+        }
+
+        @keyframes pulseDot {
+            from { opacity: 0.4; transform: scale(0.85); }
+            to { opacity: 1; transform: scale(1.15); }
+        }
+
+        .voice-wave-anim {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 16px;
+        }
+
+        .voice-wave-anim span {
+            width: 3px;
+            height: 14px;
+            background: #818cf8;
+            border-radius: 2px;
+            animation: buddyWaveAnim 0.7s ease-in-out infinite alternate;
+        }
+
+        .voice-wave-anim span:nth-child(1) { height: 10px; animation-delay: 0.0s; }
+        .voice-wave-anim span:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+        .voice-wave-anim span:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+        .voice-wave-anim span:nth-child(4) { height: 18px; animation-delay: 0.1s; }
+        .voice-wave-anim span:nth-child(5) { height: 8px; animation-delay: 0.25s; }
+
         /* Chat Area */
         .chat-box {
             flex: 1;
@@ -2707,21 +2771,22 @@
                         }
                         if (parsed.text) {
                             fullText += parsed.text;
-                            contentEl.innerHTML = formatMarkdown(fullText);
-                            chatBox.scrollTop = chatBox.scrollHeight;
 
-                            // Instant streaming speech: speak sentences as soon as they complete!
-                            if (isBuddyVoiceQuery && !isTextOnlyRequested(question)) {
-                                streamSpeechBuffer += parsed.text;
-                                let match;
-                                while ((match = streamSpeechBuffer.match(/([.?!]\s+|\n+)/)) !== null) {
-                                    const cutIdx = match.index + match[0].length;
-                                    const sentence = streamSpeechBuffer.slice(0, cutIdx).trim();
-                                    streamSpeechBuffer = streamSpeechBuffer.slice(cutIdx);
-                                    if (sentence) {
-                                        enqueueSentenceForSpeech(sentence);
-                                    }
-                                }
+                            const isVoiceQuery = isBuddyVoiceQuery && !isTextOnlyRequested(question);
+                            if (!isVoiceQuery) {
+                                contentEl.innerHTML = formatMarkdown(fullText);
+                                chatBox.scrollTop = chatBox.scrollHeight;
+                            } else {
+                                // Voice Mode: Show live generating status so user doesn't see text sitting in silence
+                                contentEl.innerHTML = `
+                                    <div class="voice-audio-card">
+                                        <div class="voice-wave-anim">
+                                            <span></span><span></span><span></span><span></span><span></span>
+                                        </div>
+                                        <span>🎙️ Pankaj Voice is speaking...</span>
+                                    </div>
+                                `;
+                                chatBox.scrollTop = chatBox.scrollHeight;
                             }
                         }
                     } catch (parseErr) {
@@ -2766,10 +2831,12 @@
                 // Auto-TTS for Hello Buddy Hands-free Mode (Custom Cloned Voice)
                 if (isBuddyVoiceQuery) {
                     if (isTextOnlyRequested(question)) {
+                        contentEl.innerHTML = formatMarkdown(fullText);
                         updateBuddyBanner(`Displayed in text (as requested)`, "listening");
                         setTimeout(() => { resumeBuddyListening(); }, 1500);
                     } else {
-                        playClonedVoiceAudio(fullText);
+                        // Synchronized Audio & Text Playback
+                        playClonedVoiceAudio(fullText, contentEl);
                     }
                 }
 
@@ -3121,9 +3188,10 @@
         // --- Cloned Voice Audio Playback via Fish Audio (/tts) with Browser Fallback ---
         let currentClonedAudio = null;
 
-        async function playClonedVoiceAudio(text) {
+        async function playClonedVoiceAudio(text, targetEl = null) {
             const cleaned = cleanTextForSpeech(text);
             if (!cleaned) {
+                if (targetEl) targetEl.innerHTML = formatMarkdown(text);
                 resumeBuddyListening();
                 return;
             }
@@ -3168,13 +3236,30 @@
                     console.warn("[Cloned Audio Playback Error]", e);
                     URL.revokeObjectURL(audioUrl);
                     currentClonedAudio = null;
+                    if (targetEl) targetEl.innerHTML = formatMarkdown(text);
                     fallbackBrowserTTS(cleaned);
                 };
+
+                // REVEAL TEXT AND PLAY AUDIO AT THE EXACT SAME INSTANT!
+                if (targetEl) {
+                    targetEl.innerHTML = `
+                        <div class="voice-audio-badge">
+                            <span class="voice-pulse-dot"></span>
+                            <span>Pankaj Cloned Voice</span>
+                        </div>
+                        <div class="voice-text-body">
+                            ${formatMarkdown(text)}
+                        </div>
+                    `;
+                    const chatBox = document.getElementById("chat-box");
+                    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+                }
 
                 await audio.play();
 
             } catch (err) {
                 console.warn("[Cloned Voice Notice] Falling back to browser speech synthesis:", err);
+                if (targetEl) targetEl.innerHTML = formatMarkdown(text);
                 fallbackBrowserTTS(cleaned);
             }
         }

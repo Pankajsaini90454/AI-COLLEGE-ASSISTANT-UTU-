@@ -499,10 +499,12 @@ async def generate_cloned_tts(request: TTSRequest):
     api_key = os.getenv("FISH_AUDIO_API_KEY", "sk-fish-uZFISpcxIwwKBFQX_9ni3LpEqKzkm7K62fuvXI6x4TM")
     voice_id = os.getenv("FISH_AUDIO_VOICE_ID", "9e338294a69a49f78c1c9f03f7bb2802")
 
-    # Clean text: remove markdown artifacts, code snippets, URLs
+    # Clean text: remove markdown artifacts, code snippets, URLs, brackets
     cleaned = re.sub(r'```[\s\S]*?```', '', text)
     cleaned = re.sub(r'https?://\S+', '', cleaned)
-    cleaned = re.sub(r'[*_~#>`\[\]\(\)]', '', cleaned)
+    cleaned = re.sub(r'\[.*?\]', '', cleaned)
+    cleaned = re.sub(r'[*_~#>`\(\)]', '', cleaned)
+    cleaned = re.sub(r'[-–—]+', ' ', cleaned)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     if not cleaned:
         cleaned = text[:200]
@@ -515,7 +517,16 @@ async def generate_cloned_tts(request: TTSRequest):
     }
     payload = {
         "text": cleaned,
-        "reference_id": voice_id
+        "reference_id": voice_id,
+        "format": "mp3",
+        "normalize": True,
+        "temperature": 0.2,
+        "latency": "balanced",
+        "repetition_penalty": 1.2,
+        "prosody": {
+            "speed": 0.95,
+            "volume": 0.0
+        }
     }
 
     async with httpx.AsyncClient(timeout=25.0) as client:
