@@ -294,10 +294,10 @@ def ask_assistant(request: QuestionRequest):
 
             # Student Profile & Course Booster: Ensure personal/course chunks are included for relevant queries
             q_lower = user_question.lower()
-            personal_keywords = ["name", "who am i", "my roll", "profile", "cv", "resume", "10th", "12th", "marks", "score", "grade", "gpa", "cgpa", "pankaj", "data science", "syllabus", "calendar", "holiday"]
+            personal_keywords = ["name", "who am i", "my roll", "profile", "cv", "resume", "10th", "12th", "marks", "score", "grade", "gpa", "cgpa", "pankaj", "data science", "syllabus", "calendar", "holiday", "college", "institute", "bias", "bhimtal", "university", "located", "where", "study"]
             if any(k in q_lower for k in personal_keywords):
                 target_files = []
-                if any(k in q_lower for k in ["name", "who am i", "profile", "cv", "resume", "pankaj"]):
+                if any(k in q_lower for k in ["name", "who am i", "profile", "cv", "resume", "pankaj", "college", "institute", "bias", "bhimtal", "university", "located", "where", "study"]):
                     target_files.extend(["Pankaj_CV.pdf", "The_Ultimate_Job_Ready_Data_Science_Course_Certificate.pdf"])
                 if any(k in q_lower for k in ["10th", "12th", "marks", "score", "grade", "gpa"]):
                     target_files.extend(["12th.pdf", "10th.pdf"])
@@ -391,6 +391,7 @@ The current year is {current_year}.
 
 3. DIRECT AND CRISP ANSWERS:
    - Answer accurately and directly without unnecessary preamble or fluff.
+   - For simple personal or factual questions (e.g. name, college name, campus location, marks), provide a direct, concise 1-2 sentence response so voice replies are lightning fast and clear.
    - When code is requested, output clean code in standard markdown code blocks with the language identifier (e.g. ```cpp).
 ==================================================================================
 
