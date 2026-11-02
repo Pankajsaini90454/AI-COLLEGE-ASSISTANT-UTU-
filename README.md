@@ -173,6 +173,3 @@ The voice assistant was designed to feel natural and effortless while avoiding c
 
 ---
 
-## 💡 How to Explain This Project (Summary for Interviews & Presentations)
-
-> *"I built an intelligent College Assistant using Retrieval-Augmented Generation (RAG) and Custom Voice Cloning. The application solves AI hallucinations by grounding all answers in verified syllabus books, academic notices, and marksheets stored in a Neon PostgreSQL vector database using pgvector. The system features a FastAPI backend, Gemini 3.5 Flash for grounded reasoning, and an integrated 'Hello Buddy' voice assistant that speaks using a realistic cloned human voice via Fish Audio. The entire architecture is containerized with Docker and deployed to the cloud at zero hosting cost."*
