@@ -1780,7 +1780,7 @@
         <footer class="input-container">
             <div class="input-box">
                 <textarea id="user-input" rows="1"
-                    placeholder="Ask about syllabus, college details, marks, or holidays..." autocomplete="off"
+                    placeholder="Ask about university syllabus, course subjects, credits, or holiday calendar..." autocomplete="off"
                     onkeydown="handleKeyDown(event)" oninput="autoResizeTextarea(this)"></textarea>
                 <div class="input-actions">
                     <!-- Quick PDF Attach -->
@@ -2424,36 +2424,36 @@
                             <span>UTU Academic Portal • Student Assistant</span>
                         </div>
                         <h2 class="welcome-title">College Academic Assistant</h2>
-                        <p class="welcome-desc">Verified information for syllabus, course subjects, academic calendar, exams, and student records.</p>
+                        <p class="welcome-desc">Verified information for official university syllabus, course subjects, academic calendar, and exam schedules.</p>
                         
                         <div class="starter-grid">
-                            <div class="starter-card" onclick="askStarter('Tell me about my college and academic program.')">
+                            <div class="starter-card" onclick="askStarter('Show me the 3rd semester subjects and syllabus modules.')">
                                 <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
-                                    <span>College & Profile</span>
-                                </div>
-                                <div class="starter-card-desc">Information on Birla Institute of Applied Sciences (BIAS) & UTU</div>
-                            </div>
-                            <div class="starter-card" onclick="askStarter('What are my 12th marks and GPA?')">
-                                <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-                                    <span>Marks & Transcripts</span>
-                                </div>
-                                <div class="starter-card-desc">Check 12th board marksheet grades, subject scores, and total</div>
-                            </div>
-                            <div class="starter-card" onclick="askStarter('Show me the 3rd semester subjects and syllabus.')">
-                                <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                                     <span>Syllabus & Modules</span>
                                 </div>
-                                <div class="starter-card-desc">Retrieve semester course subjects, credits, and syllabus topics</div>
+                                <div class="starter-card-desc">Course subjects, credit schemes, and detailed syllabus topics</div>
                             </div>
-                            <div class="starter-card" onclick="askStarter('What are the upcoming college holidays from the calendar?')">
+                            <div class="starter-card" onclick="askStarter('What are the upcoming college holidays and breaks from the calendar?')">
                                 <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-                                    <span>College Calendar</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                                    <span>Academic & Holiday Calendar</span>
                                 </div>
-                                <div class="starter-card-desc">Upcoming university vacation dates, events, and exam schedules</div>
+                                <div class="starter-card-desc">University vacation dates, gazetted holidays, and semester schedule</div>
+                            </div>
+                            <div class="starter-card" onclick="askStarter('What is the credit scheme and lab requirements for B.Tech?')">
+                                <div class="starter-card-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
+                                    <span>Course Structure & Credits</span>
+                                </div>
+                                <div class="starter-card-desc">Credit breakdown, lab practicals, and passing criteria</div>
+                            </div>
+                            <div class="starter-card" onclick="askStarter('When are the sessional and semester examinations scheduled?')">
+                                <div class="starter-card-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    <span>Exam Dates & Sessions</span>
+                                </div>
+                                <div class="starter-card-desc">Upcoming mid-terms, sessional exams, and academic calendar timeline</div>
                             </div>
                         </div>
                     </div>
@@ -3531,6 +3531,7 @@
                     if (!cleanQuery) cleanQuery = fullRaw;
                     cleanQuery = cleanQuery.replace(/^[,\-–—\s]+/, "");
 
+       
                     if (cleanQuery.length > 1) {
                         // Echo check against last response:
                         if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {

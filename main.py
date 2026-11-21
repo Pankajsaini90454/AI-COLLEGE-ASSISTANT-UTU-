@@ -265,6 +265,29 @@ async def upload_pdf(file: UploadFile = File(...)):
         return {"status": "Error", "message": str(e)}
 
 
+def is_conversational_greeting(text: str) -> bool:
+    clean = re.sub(r"[^\w\s]", "", text.lower()).strip()
+    greetings = {
+        "hi", "hello", "hey", "hola", "namaste", "whatsup", "whats up", "what up",
+        "whatsup buddy", "whats up buddy", "hey buddy", "hi buddy", "hello buddy",
+        "how are you", "how are you doing", "kaise ho", "kya haal hai", "aur batao",
+        "good morning", "good afternoon", "good evening", "sup", "yo"
+    }
+    if clean in greetings:
+        return True
+    return any(clean == g or clean.startswith(g + " ") for g in ["hi", "hello", "hey", "whatsup", "whats up", "yo"])
+
+
+def is_private_records_query(text: str) -> bool:
+    clean = text.lower()
+    keywords = [
+        "my marks", "my 10th", "my 12th", "my marksheet", "my gpa", "my cgpa",
+        "my roll", "my phone", "my address", "my result", "mera marksheet",
+        "mere marks", "mere number", "mera roll", "my profile", "my resume", "my cv"
+    ]
+    return any(k in clean for k in keywords)
+
+
 # --- ASK ASSISTANT (RAG + MEMORY + STREAMING) ---
 
 @app.post("/ask")
@@ -290,38 +313,47 @@ def ask_assistant(request: QuestionRequest):
         primary_model_name = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
         fallback_model_name = "gemini-3.8-flash"
 
-        # 1. EXTRACT & UPDATE PERSISTENT MEMORIES
-        # Rule-based detection (zero latency, zero API calls)
+        # 1. EXTRACT & UPDATE PERSISTENT MEMORIES (if any user preferences)
         memory_store.extract_and_save_memories(user_question)
 
-        # 2. RETRIEVE RELEVANT DOCUMENT CHUNKS FROM VECTOR DATABASE
+        # 2. INTENT DETECTION & CONTEXT RETRIEVAL
         context = ""
         sources_metadata = []
-        try:
-            question_embedding = to_vector(embedding_model.encode(user_question))
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT chunk_text, filename, (1 - (embedding <=> %s::vector)) AS similarity
-                FROM college_docs
-                ORDER BY embedding <=> %s::vector
-                LIMIT 8;
-            """, (question_embedding, question_embedding))
-            results = list(cursor.fetchall())
 
-            # Student Profile & Course Booster: Ensure personal/course chunks are included for relevant queries
-            q_lower = user_question.lower()
-            personal_keywords = ["name", "who am i", "my roll", "profile", "cv", "resume", "10th", "12th", "marks", "score", "grade", "gpa", "cgpa", "pankaj", "data science", "syllabus", "calendar", "holiday", "college", "institute", "bias", "bhimtal", "university", "located", "where", "study"]
-            if any(k in q_lower for k in personal_keywords):
+        if is_conversational_greeting(user_question):
+            context = (
+                "The student is greeting you casually. Respond with a warm, polite, and professional greeting as the UTU Academic Assistant. "
+                "Ask how you can assist them with their official university syllabus, course subjects, academic schedule, or holiday calendar today. "
+                "Do NOT assume or mention personal projects, data science coursework, or private student details."
+            )
+            sources_metadata = []
+        elif is_private_records_query(user_question):
+            context = (
+                "The user asked for personal marks, marksheet grades, or private student records. "
+                "For student safety and privacy, inform them politely and clearly that personal student records and private marksheets are confidential and not stored in this public assistant. "
+                "Reassure them that you are ready to answer any questions about the official B.Tech University Syllabus, course subjects, credit scheme, academic calendar, or holiday dates."
+            )
+            sources_metadata = []
+        else:
+            try:
+                question_embedding = to_vector(embedding_model.encode(user_question))
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT chunk_text, filename, (1 - (embedding <=> %s::vector)) AS similarity
+                    FROM college_docs
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT 8;
+                """, (question_embedding, question_embedding))
+                results = list(cursor.fetchall())
+
+                # Target official syllabus and calendar documents
+                q_lower = user_question.lower()
                 target_files = []
-                if any(k in q_lower for k in ["name", "who am i", "profile", "cv", "resume", "pankaj", "college", "institute", "bias", "bhimtal", "university", "located", "where", "study"]):
-                    target_files.extend(["Pankaj_CV.pdf", "The_Ultimate_Job_Ready_Data_Science_Course_Certificate.pdf"])
-                if any(k in q_lower for k in ["10th", "12th", "marks", "score", "grade", "gpa"]):
-                    target_files.extend(["12th.pdf", "10th.pdf"])
-                if "data science" in q_lower:
-                    target_files.extend(["data_science_notes.pdf", "The_Ultimate_Job_Ready_Data_Science_Course_Certificate.pdf"])
-                if any(k in q_lower for k in ["calendar", "holiday", "vacation"]):
-                    target_files.extend(["639222394440338142.pdf"])
+                if any(k in q_lower for k in ["calendar", "holiday", "vacation", "chutti", "holidays", "diwali", "holi", "event", "session", "date"]):
+                    target_files.append("639222394440338142.pdf")
+                if any(k in q_lower for k in ["syllabus", "subject", "course", "credit", "semester", "unit", "module", "lab", "btech", "exam", "branch"]):
+                    target_files.append("BTECH 2,3&4 YR.pdf")
 
                 if target_files:
                     cursor.execute("""
@@ -337,86 +369,77 @@ def ask_assistant(request: QuestionRequest):
                         if b[0] not in existing_texts:
                             results.insert(0, b)
 
-            cursor.close()
-            conn.close()
+                cursor.close()
+                conn.close()
 
-            context_chunks = []
-            seen_files = set()
-            for row in results[:10]:
-                chunk_text = row[0]
-                fname = row[1] if len(row) > 1 and row[1] else "College Document"
-                sim_score = float(row[2]) if len(row) > 2 and row[2] is not None else 0.85
-                context_chunks.append(f"[{fname}]\n{chunk_text}")
+                context_chunks = []
+                seen_files = set()
+                for row in results[:8]:
+                    chunk_text = row[0]
+                    fname = row[1] if len(row) > 1 and row[1] else "Academic Document"
+                    sim_score = float(row[2]) if len(row) > 2 and row[2] is not None else 0.85
 
-                if fname not in seen_files:
-                    seen_files.add(fname)
-                    pct = max(60, min(99, int(sim_score * 100))) if sim_score < 1.0 else 96
-                    snippet = " ".join(chunk_text.split())[:130] + "..."
-                    sources_metadata.append({
-                        "filename": fname,
-                        "match": f"{pct}% match",
-                        "snippet": snippet
-                    })
+                    # Similarity filter: drop low relevance noise
+                    if sim_score < 0.35 and fname not in target_files:
+                        continue
 
-            context = "\n\n".join(context_chunks)
-        except Exception as db_err:
-            print(f"[Vector Search Notice] Could not retrieve DB chunks: {db_err}")
-            context = "No document database chunks available at this moment."
+                    context_chunks.append(f"[{fname}]\n{chunk_text}")
+
+                    if fname not in seen_files:
+                        seen_files.add(fname)
+                        pct = max(60, min(99, int(sim_score * 100))) if sim_score < 1.0 else 96
+                        snippet = " ".join(chunk_text.split())[:130] + "..."
+                        sources_metadata.append({
+                            "filename": fname,
+                            "match": f"{pct}% match",
+                            "snippet": snippet
+                        })
+
+                context = "\n\n".join(context_chunks)
+            except Exception as db_err:
+                print(f"[Vector Search Notice] Could not retrieve DB chunks: {db_err}")
+                context = "No document database chunks available at this moment."
 
         # 3. GET ALL PERSISTENT STORED MEMORIES
         formatted_memories = memory_store.format_memories_for_prompt()
 
         # 4. FORMAT CONVERSATION HISTORY
         history_lines = []
-        for h in request.history[-10:]:
+        for h in request.history[-8:]:
             role_label = "Student" if h.role == "user" else "College AI"
             history_lines.append(f"{role_label}: {h.content}")
         formatted_history = "\n".join(history_lines) if history_lines else "None (New conversation)"
 
-        # 5. CONSTRUCT SYSTEM PROMPT (STRICT: NO ROBOTIC DISCLAIMERS + USER MEMORY OVERRIDE)
-        system_prompt = f"""You are a helpful, professional, and friendly College AI Assistant.
+        # 5. CONSTRUCT SYSTEM PROMPT (ACADEMIC FOCUS + PRIVACY-FIRST)
+        system_prompt = f"""You are the UTU Academic Assistant, an official, helpful, and professional AI college assistant.
 The current year is {current_year}.
 
-=================== ABSOLUTE RULES ON TONE & STYLE (MANDATORY) ===================
-1. NEVER USE META-DISCLAIMERS OR ROBOTIC FILLER:
-   - STRICTLY FORBIDDEN PHRASES:
+=================== KNOWLEDGE BASE & SCOPE ===================
+Your verified knowledge base consists of:
+1. The Official University Syllabus (B.Tech Course subjects, credit schemes, semester modules, practical labs).
+2. The Official Academic & Holiday Calendar (Gazetted university holidays, semester breaks, exam schedules).
+
+=================== PRIVACY & SAFETY RULES (STRICT) ===================
+1. STUDENT PRIVACY FIRST:
+   - For student safety and privacy, personal student records (marksheets, private phone numbers, personal student grades) are kept confidential and are NOT accessible.
+   - If asked for personal marks or private marksheets, politely inform the user that private records are confidential for safety reasons, and offer to help with official syllabus, subjects, or academic holiday calendar.
+   - NEVER hallucinate or assume personal projects, private student scores, or unrelated course certificates.
+
+2. ABSOLUTE RULES ON TONE & STYLE:
+   - NEVER USE META-DISCLAIMERS:
      ❌ "Based on your provided document..."
      ❌ "According to the uploaded files..."
      ❌ "As per the documents provided..."
-     ❌ "Based on the context..."
-     ❌ "From the marksheet/PDF..."
-     ❌ "Okay [Name], but based on your provided document..."
-   - ALWAYS state answers DIRECTLY, naturally, and concisely as a knowledgeable assistant.
-   
-   Examples:
-   - Question: "What is my name?"
-     CORRECT: "Your name is Rahul." (or "Your name is Pankaj Saini.")
-     WRONG: "Based on your provided document, your name is..."
-     
-   - Question: "What's my marks in 12th?"
-     CORRECT: "Your marks are 484 out of 500."
-     WRONG: "Based on your provided document, your marks is 484..."
-     
-   - User correction: "My name is Rahul"
-     CORRECT: "Okay Rahul! I'll remember that."
-     WRONG: "Okay Rahul, but according to your document it says Pankaj Saini."
+   - ALWAYS state facts DIRECTLY, politely, and concisely.
+   - For casual greetings (e.g. "whatsup", "hi", "hello"), reply with a brief, friendly academic greeting and ask what syllabus or calendar topic they want to check.
+   - Keep answers structured and clean (bullet points, clear tables, bold headers).
+=============================================================
 
-2. USER MEMORIES & CORRECTIONS OVERRIDE ALL DOCUMENTS (TOP PRIORITY):
-   - Whatever the student tells you about themselves (name, roll number, course, corrections) is the ABSOLUTE TRUTH.
-   - If a document says one name (e.g., Pankaj Saini) but user memory or conversation says another name (e.g., Rahul), Rahul is their true name. NEVER question it or cite the old name.
-   - If the student tells you an extra subject for a semester (e.g. "Cloud Computing is also in 3rd semester"), ADD IT to the official syllabus when listing subjects.
-
-3. DIRECT AND CRISP ANSWERS:
-   - Answer accurately and directly without unnecessary preamble or fluff.
-   - For simple personal or factual questions (e.g. name, college name, campus location, marks), provide a direct, concise 1-2 sentence response so voice replies are lightning fast and clear.
-   - When code is requested, output clean code in standard markdown code blocks with the language identifier (e.g. ```cpp).
-==================================================================================
-
-=== STORED USER MEMORIES & LEARNED FACTS (HIGHEST PRIORITY) ===
+=== STORED USER PREFERENCES ===
 {formatted_memories}
-===============================================================
+===============================
 
-=== RETRIEVED CONTEXT FROM COLLEGE DOCUMENTS ===
+=== RETRIEVED CONTEXT FROM OFFICIAL DOCUMENTS ===
 {context}
 ================================================
 

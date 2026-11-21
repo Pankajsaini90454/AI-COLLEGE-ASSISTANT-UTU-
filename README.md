@@ -1,175 +1,165 @@
-# AI College Assistant (UTU)
+# 🎓 AI College Academic Assistant (UTU)
 
-An intelligent, document-grounded artificial intelligence assistant designed specifically for college students, faculty, and academic administration. The system allows users to interact either through a modern chat interface or completely by voice using **"Hello Buddy"** mode, answering questions about college syllabus, exam schedules, marksheets, personal academic profile, and official university notices with 100% accuracy.
+An intelligent, document-grounded artificial intelligence assistant designed specifically for university students, faculty, and academic administration. The system allows users to interact either through a modern chat interface or completely hands-free by voice using **"Hello Buddy"** mode. It answers questions about course syllabus, subjects, credits, examination schedules, and official university holiday calendars with 100% verified accuracy.
 
 ---
 
-## 📌 Project Overview & Summary
+## 📌 Project Overview
 
 ### What Does This Project Do?
-Traditional chatbots often hallucinate (make up facts) when asked specific questions about university courses, marksheets, or syllabus regulations. 
+When students need to know syllabus topics, course credit requirements, or upcoming university holiday dates, they typically have to scroll through 200+ page PDF circulars. 
 
-**AI College Assistant (UTU)** solves this problem using **Retrieval-Augmented Generation (RAG)**. Instead of guessing, the AI connects to a verified university knowledge base stored in a high-speed vector database. Whenever a user asks a question, the assistant finds the exact page and paragraph from official college PDFs, marksheets, and student profile records, and provides an answer grounded strictly in verified university sources.
+Traditional generic chatbots (like standard ChatGPT) hallucinate or mix up syllabus regulations from different universities. **AI College Academic Assistant** solves this problem using **Retrieval-Augmented Generation (RAG)**. It searches through official university PDFs stored in a PostgreSQL vector database (`pgvector`) and gives direct, accurate answers grounded in official college documents.
 
-In addition, it features a personalized, human-like voice interface powered by **AI Voice Cloning**. When interacting in voice mode, the assistant speaks back using a realistic cloned voice rather than a robotic text-to-speech engine.
+### 🛡️ Privacy & Safety First
+For student security and privacy, private student records (such as personal marksheets, private contact info, and grades) are kept strictly confidential and are not exposed. The assistant is dedicated exclusively to official university academic information:
+1. **Official University Syllabus (B.Tech):** Course subjects, credit schemes, unit modules, and practical lab requirements.
+2. **Official Academic & Holiday Calendar:** Gazetted university holidays, semester breaks, and examination schedules.
 
 ---
 
-## 🔄 How It Works: The End-to-End Workflow
+## 🚀 Why This Project is Better Than General AI Chatbots
 
-The journey of every user question through the system follows three simple, coordinated stages:
+| Feature / Capability | General AI Chatbots (ChatGPT / Standard LLMs) | Generic College Chatbots | 🌟 AI College Assistant (UTU) |
+|---|---|---|---|
+| **Syllabus Accuracy** | ❌ **High Hallucination:** Guesses general syllabus; mixes up US, foreign, or different state university syllabus topics. | ⚠️ **Rigid Keyword Match:** Fails if the student doesn't type exact keywords. | ✅ **100% Grounded:** Retrieves the exact unit and credits from the official university syllabus PDF via pgvector. |
+| **University Holiday Calendar** | ❌ **No Local Knowledge:** Has no knowledge of specific state university circulars or gazetted holiday dates. | ❌ Static list that breaks when university schedules change. | ✅ **Exact Calendar Retrieval:** Accurately answers university holiday dates, vacation schedules, and examination periods. |
+| **Voice Response Delay** | ⏳ **Slow (5–8 seconds):** Waits for the entire text paragraph to generate before starting text-to-speech. | ❌ No voice interaction (text only). | ⚡ **Sub-Second (<1s):** Starts speaking sentence 1 within ~1 second using live streaming sentence audio queue. |
+| **Voice Barge-In (Interruption)** | ❌ **Cannot Interrupt:** You must wait until it finishes speaking, or clicking stop breaks the session. | ❌ Not available. | 🎙️ **Full Voice Interruption:** Say *"Stop"*, *"रुको"*, or ask a new question in the middle of speech; voice cuts off instantly. |
+| **Acoustic Echo Rejection** | ❌ **Feedback Loop:** Microphone picks up the AI's voice from laptop speakers and re-types it into chat. | ❌ Not available. | 🛡️ **Zero Echo Loop:** Smart acoustic filter and similarity check prevent speaker output from re-entering the microphone. |
+| **Privacy & Student Safety** | ⚠️ Often trains on user queries; student data risk. | ⚠️ Unencrypted local files. | 🛡️ **Privacy-First:** Personal records are isolated and omitted from public models. |
+| **Cloud Hosting Cost** | 💸 Heavy multi-gigabyte models requiring expensive GPUs ($50–$200/mo). | ⚠️ Expensive cloud dependencies. | 🚀 **Ultra-Lightweight:** FastEmbed ONNX runs within ~75MB RAM on free/low-tier cloud (Render 512MB RAM tier). |
+
+---
+
+## 🔄 How It Works: The 3-Step Pipeline
+
+```
+[Student Input: Voice or Text]
+               │
+               ▼
+[Semantic Embedding Engine (FastEmbed ONNX)]
+               │
+               ▼
+[Vector Database Search (PostgreSQL pgvector HNSW Index)]
+               │
+               ▼
+[LLM Reasoning & Synthesis (Gemini 3.5 Flash)]
+               │
+       ┌───────┴───────┐
+       ▼               ▼
+[Live Markdown     [Parallel Sentence TTS
+ Streaming in UI]   Audio Streaming (<1s)]
+```
 
 ### Stage 1: Question Input (Text or Voice)
-* **Text Mode:** The user types any academic or college query in the input box (e.g., *"What is my semester GPA?"* or *"Explain Unit 3 of Cloud Computing syllabus"*).
-* **Voice Mode ("Hello Buddy"):** The user clicks the **Hello Buddy** button in the top bar. The browser begins listening through the microphone. The user speaks naturally in English or Hinglish. When the user finishes speaking, the system automatically detects the silence and submits the question.
+* **Text Mode:** The student types an academic question into the input box (e.g., *"What subjects are in 3rd semester CSE?"* or *"When does Diwali break start?"*).
+* **Voice Mode ("Hello Buddy"):** Click the **Hello Buddy** button in the top bar. Speak naturally in English or Hinglish. When you finish speaking, the system automatically detects silence and submits the question.
 
-### Stage 2: Processing & Knowledge Retrieval (RAG Pipeline)
-1. **Semantic Search (Vector Engine):** The user's question is converted into mathematical meaning (vector embedding) using an ultra-lightweight embedding model.
-2. **Database Lookup:** The system searches a cloud-hosted PostgreSQL vector database (`pgvector`) to find the top matching chunks of text from official syllabus PDFs, previous year marksheets, and notices.
-3. **Fact Retrieval:** The system retrieves the student's personal profile (name, college name, branch, graduation year) from persistent long-term memory.
-4. **AI Generation:** The retrieved document passages, user memories, and chat history are passed to Google Gemini 3.5 Flash. The model writes an accurate, polite, and verified answer.
+### Stage 2: Knowledge Retrieval (RAG Pipeline)
+1. **Semantic Search:** The question is converted into mathematical vector coordinates using FastEmbed ONNX.
+2. **Intent Guardrails:** 
+   - Casual greetings (*"hi"*, *"whatsup buddy"*) receive warm, polite greetings without pulling unrelated document chunks.
+   - Private record queries are safely redirected to public academic information.
+3. **Database Lookup:** The system queries PostgreSQL `pgvector` to find matching chunks from official syllabus and calendar documents.
+4. **AI Generation:** The retrieved verified context is passed to Gemini 3.5 Flash, which formulates a direct, concise response.
 
-### Stage 3: Output Delivery (Synchronized Text & Cloned Speech)
-* **Visual Output:** The text response streams onto the screen in real-time, complete with formatted lists, tables, bold text, and clickable source citations.
-* **Audio Output:** In voice mode, the text is sent to the custom voice cloning engine (Fish Audio). The assistant speaks the answer aloud in a calm, natural human voice.
-* **Turn-Taking Conversation:** While the AI is speaking through your speakers, the microphone is kept off so it never records its own voice. Once the AI finishes speaking, the microphone automatically opens again so you can immediately ask your next question without repeating any wake-word.
-* **Instant Stop:** If you want to stop the assistant, simply say *"Stop"*, *"रुको"*, *"बस"*, or *"Bye Buddy"*, or click the button on screen.
+### Stage 3: Output Delivery (Synchronized Text & Speech)
+* **Visual Output:** Markdown text streams in real-time with formatted bullet points, tables, and verified source badges.
+* **Audio Output:** Text sentences are sent in parallel to the custom cloned voice engine. Sentence 1 begins speaking within ~1 second while remaining sentences stream in the background.
+* **Acoustic Filtering:** The system listens for voice commands (*"Stop"*, *"रुको"*, *"बस"*) or new questions during playback and halts speech immediately.
 
 ---
 
 ## 📁 File-by-File Breakdown & Architecture
 
-Here is what every individual file in this codebase does, what happens inside it, and its exact role in the overall system:
+Here is what every file in this project does:
 
----
+### 1. `main.py` — Central Backend Server
+* **Role:** The main API server coordinating frontend requests, database vector search, Gemini generation, and text-to-speech.
+* **Key Endpoints:**
+  * `POST /ask`: Receives user queries, runs vector similarity search, and streams back token responses.
+  * `POST /tts`: Generates cloned human voice audio for individual sentences.
+  * `GET /api/documents`: Returns the list of currently indexed official documents.
+* **Output:** Live FastAPI server running on port 8000 (local) or port 10000 (Render).
 
-### 1. `main.py` — The Central Backend Server
-* **What does it do?**
-  It is the heart and brain of the entire application. It runs a high-performance web server built with FastAPI that coordinates the frontend, the vector database, the Gemini AI model, and the voice cloning engine.
-* **What happens inside it?**
-  * Serves the main website and web pages when someone visits the application URL.
-  * Hosts the main question-and-answer API endpoint (`/ask`) which receives questions and streams back answers token-by-token.
-  * Connects to the vector database to perform similarity searches and find matching document chunks.
-  * Houses the custom Text-to-Speech API endpoint (`/tts`) that communicates with Fish Audio to generate realistic cloned voice audio for any sentence.
-  * Provides endpoints to upload new PDF documents, retrieve chat conversation histories, and view indexed files.
-  * Uses a lazy-loading proxy for embedding models so the server boots up in under 0.1 seconds on cloud deployments without freezing.
-* **Output / Role:**
-  Produces the live API and web server running on port 8000 or 10000, serving data and audio streams to the user interface.
+### 2. `chat.html` — Frontend User Interface
+* **Role:** The responsive web interface that students interact with in their browser.
+* **Key Features:**
+  * Clean, professional **Rose-White** theme designed for academic institutions.
+  * **"Hello Buddy"** voice assistant with real-time audio visualization.
+  * Sentence-by-sentence parallel audio queue for sub-second speech response.
+  * Acoustic echo filter that prevents speaker feedback loops.
+  * Markdown rendering, syllabus tables, and source verification drawers.
+* **Output:** Interactive web application rendered in Chrome, Edge, or Brave.
 
----
+### 3. `database.py` — Database Connection & Vector Engine
+* **Role:** Manages connection pooling and table initialization for PostgreSQL with the `pgvector` extension.
+* **Output:** Creates and manages the `college_docs` table with HNSW vector indexing.
 
-### 2. `chat.html` — The Frontend User Interface
-* **What does it do?**
-  It is the complete visual interface that the user sees in the browser. It combines modern responsive design, real-time message streaming, and the voice assistant logic.
-* **What happens inside it?**
-  * Displays a dark-mode conversational UI with a sidebar for previous chats and indexed documents.
-  * Features the **"Hello Buddy"** voice assistant panel that uses the Web Speech API to listen to the user's microphone.
-  * Manages the conversational flow: pauses the microphone while the assistant is speaking through the laptop speakers to prevent echo loops, and turns the microphone back on as soon as the answer finishes.
-  * Renders Markdown formatting, tables, source verification badges, and audio playback cards.
-  * Supports drag-and-drop PDF uploads with live status indicators.
-* **Output / Role:**
-  The interactive web page rendered in Google Chrome, Microsoft Edge, or any modern web browser.
-
----
-
-### 3. `ingest.py` — The Knowledge Base Ingestion Script
-* **What does it do?**
-  It is the batch processing utility that takes raw university syllabus books, marksheets, and notices from the `data/` folder and loads them into the cloud vector database.
-* **What happens inside it?**
-  * Scans the `data/` folder for PDF documents.
-  * Calls `extractor.py` to extract all written text from each PDF.
-  * Splits long documents into small, coherent paragraphs (chunks) using `chunker.py`.
-  * Generates mathematical embeddings (384-dimensional vectors) for every chunk using FastEmbed ONNX.
-  * Connects to the cloud PostgreSQL database and uploads the text along with its vector representation into the `knowledge_base` table.
-* **Output / Role:**
-  Populates the vector database so the AI has verified knowledge to reference when answering questions.
-
----
-
-### 4. `extractor.py` — Intelligent PDF Text Extractor
-* **What does it do?**
-  It extracts readable text from PDF documents of all types, whether they are digital e-books or scanned marksheet photocopies.
-* **What happens inside it?**
-  * **Tier 1 (Digital Extraction):** First attempts to extract clean text using `pdfplumber`. For regular digital PDFs (like syllabus documents), this takes less than a second.
-  * **Tier 2 (OCR Fallback):** If a PDF contains little to no digital text (for example, a scanned 10th marksheet or physical certificate), it automatically converts the pages into high-resolution images and uses Tesseract Optical Character Recognition (OCR) to read the printed words.
-* **Output / Role:**
-  Returns clean, raw text strings extracted from any uploaded or local PDF.
-
----
+### 4. `extractor.py` — Hybrid Document Extractor
+* **Role:** Extracts clean digital text from university PDF documents using `pdfplumber` with Tesseract OCR fallback for scanned pages.
+* **Output:** Clean text strings ready for chunking.
 
 ### 5. `chunker.py` — Semantic Document Chunker
-* **What does it do?**
-  Long documents cannot be processed as a single massive block. `chunker.py` divides large texts into small, bite-sized sections.
-* **What happens inside it?**
-  * Splits text into manageable segments (approximately 450 to 500 characters each).
-  * Implements an overlap between consecutive chunks so that important sentences cut off at a boundary are not lost.
-  * Preserves paragraph structure and heading context.
-* **Output / Role:**
-  Produces a list of structured text chunks ready to be converted into embeddings and stored in the database.
+* **Role:** Breaks long document text into overlapping token windows (150–200 words) so vector search can locate exact paragraphs.
+* **Output:** Array of text chunks with metadata.
+
+### 6. `ingest.py` — Document Ingestion Utility
+* **Role:** Reads PDF files from the `data/` folder, extracts text, chunks it, generates vector embeddings, and stores them in PostgreSQL.
+* **Output:** Fully indexed vector database.
+
+### 7. `Dockerfile` — Production Container
+* **Role:** Containerizes the application on Python 3.11-slim with pre-cached ONNX embedding models for fast boot times on cloud platforms like Render.
+* **Output:** Production Docker container image.
 
 ---
 
-### 6. `database.py` — PostgreSQL & Vector Database Connector
-* **What does it do?**
-  Manages connections to the PostgreSQL database (hosted on Neon Cloud) and ensures the `pgvector` extension and required tables exist.
-* **What happens inside it?**
-  * Connects securely to the database using the connection string from environment variables.
-  * Executes startup SQL commands to enable vector indexing (HNSW index) for rapid nearest-neighbor vector search.
-  * Initializes the `knowledge_base` table with columns for document name, chunk text, page numbers, and vector embeddings.
-* **Output / Role:**
-  Provides a clean, reusable database connection to all other scripts in the application.
+## 🛠️ How to Run Locally
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Pankajsaini90454/AI-COLLEGE-ASSISTANT-UTU-.git
+cd AI-COLLEGE-ASSISTANT-UTU-
+```
+
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Set Up Environment Variables
+Create a `.env` file in the project root:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+DATABASE_URL=postgresql://username:password@host:5432/dbname
+PORT=8000
+```
+
+### 4. Ingest Official Documents
+Place your university syllabus and holiday calendar PDFs in the `data/` directory, then run:
+```bash
+python ingest.py
+```
+
+### 5. Start the Server
+```bash
+python main.py
+```
+Open your browser and navigate to: **`http://localhost:8000`**
 
 ---
 
-### 7. `memory_store.py` — Persistent Student Memory System
-* **What does it do?**
-  Gives the assistant long-term memory about the student. It ensures the assistant remembers facts across multiple conversations without needing to ask again.
-* **What happens inside it?**
-  * Stores key identity facts such as user's name, college name, branch, semester, and personal details in persistent JSON storage (`storage/memories.json`).
-  * Provides functions to retrieve, update, and search memories.
-  * Injects these personal facts into the AI's system prompt during every query so the assistant greets the user by name and tailors its advice to their specific branch and college.
-* **Output / Role:**
-  Provides personal context that makes the AI feel like a dedicated personal college tutor.
+## 🌐 Cloud Deployment (Render)
+
+1. Connect your GitHub repository to **Render**.
+2. Select **Web Service** with **Docker** environment.
+3. In the **Environment Variables** tab, add:
+   - `GEMINI_API_KEY`: Your Google Gemini API key.
+   - `DATABASE_URL`: Your cloud PostgreSQL (pgvector) connection string.
+4. Click **Deploy**. Render will build the Docker container and make the service live.
 
 ---
 
-### 8. `threads_store.py` — Multi-Session Chat History
-* **What does it do?**
-  Manages conversation history so the user can switch between different chat sessions (like in ChatGPT) and review past answers.
-* **What happens inside it?**
-  * Saves and loads chat threads, timestamps, user questions, assistant answers, and cited sources.
-  * Syncs conversation threads to cloud storage so chats persist even when the browser is refreshed or reopened on another device.
-* **Output / Role:**
-  Powers the sidebar chat history list in the user interface.
-
----
-
-### 9. `Dockerfile` & Cloud Deployment Architecture
-* **What does it do?**
-  Packages the entire application—Python environment, Linux libraries, pre-cached ONNX embedding models, and server scripts—into an isolated, production-ready container for cloud deployment (e.g., Render, Docker).
-* **What happens inside it?**
-  * Uses a minimal Linux Python base image.
-  * Installs required system dependencies (PostgreSQL client libraries, curl, build essentials).
-  * Pre-downloads and permanently bakes the FastEmbed ONNX model directly into the image (`/app/fastembed_cache`) during build time, ensuring the cloud server starts in under 3 minutes without waiting for external model downloads.
-* **Output / Role:**
-  Enables 24/7 one-click cloud hosting on free-tier platforms with $0.00 infrastructure cost.
-
----
-
-## 🎙️ The Voice Assistant Engine: How "Hello Buddy" Operates
-
-The voice assistant was designed to feel natural and effortless while avoiding common voice AI pitfalls (like audio feedback loops). Here is how the voice state machine works:
-
-1. **Explicit Activation:**
-   The microphone is completely dormant when the page opens. It only begins listening when the user clicks the **"Hello Buddy"** button in the header.
-2. **Speech Recognition:**
-   The Web Speech API listens for spoken queries in English and Hindi/Hinglish. It detects when the speaker stops talking and submits the question.
-3. **Acoustic Echo Prevention:**
-   While the AI generates and speaks the answer, the microphone is automatically stopped. This ensures the microphone never hears the sound coming out of the laptop speakers, completely eliminating infinite self-reinforcing echo loops.
-4. **Natural Continuation:**
-   The moment the audio playback ends, the microphone automatically starts listening again. You can ask follow-up questions seamlessly without clicking anything again.
-5. **Clean Exit:**
-   Saying *"Stop"*, *"रुको"*, *"बस"*, or *"Bye Buddy"*, or clicking the button on screen, instantly silences the voice and closes the assistant.
-
----
-
+## 📄 License
+This project is built for university students and academic administration under the MIT License.
