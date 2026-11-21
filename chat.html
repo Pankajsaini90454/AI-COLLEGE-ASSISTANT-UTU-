@@ -97,86 +97,114 @@
             --theme-pill-color: #2563EB;
         }
 
-        /* 2. THEME: SHINING OBSIDIAN NEON DARK (with glowing cyberpunk aura) */
+        /* 2. THEME: GREY SHINING (Titanium Graphite with Specular Shine) */
         body[data-theme="dark"] {
-            --bg-base: #0A0C14;
-            --bg-sidebar: #0F121C;
-            --bg-sidebar-card: #151825;
-            --bg-card-hover: #1C2030;
-            /* Radiant shining ambient lights */
-            --bg-chat-canvas: radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.28) 0%, transparent 55%),
-                              radial-gradient(circle at 15% 85%, rgba(168, 85, 247, 0.18) 0%, transparent 50%),
-                              radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.18) 0%, transparent 50%),
-                              #0A0C14;
-            --bg-bubble-ai: #131624;
-            --bg-bubble-user: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-            --user-bubble-border: 1px solid rgba(165, 180, 252, 0.6);
+            --bg-base: #14171E;
+            --bg-sidebar: #1A1D26;
+            --bg-sidebar-card: #202430;
+            --bg-card-hover: #282D3C;
+            /* Radiant metallic grey ambient specular glow */
+            --bg-chat-canvas: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
+                              radial-gradient(circle at 10% 90%, rgba(148, 163, 184, 0.09) 0%, transparent 50%),
+                              radial-gradient(circle at 90% 90%, rgba(125, 211, 252, 0.07) 0%, transparent 50%),
+                              #14171E;
+            --bg-bubble-ai: #1C202B;
+            --bg-bubble-user: linear-gradient(135deg, #475569 0%, #334155 100%);
+            --user-bubble-border: 1px solid rgba(255, 255, 255, 0.22);
             --user-bubble-color: #FFFFFF;
-            --user-bubble-shadow: 0 4px 22px rgba(79, 70, 229, 0.45), 0 0 16px rgba(99, 102, 241, 0.3);
-            --bg-input: #131624;
+            --user-bubble-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.06);
+            --bg-input: #1C202B;
             --border-subtle: rgba(255, 255, 255, 0.1);
             --border-hover: rgba(255, 255, 255, 0.22);
-            --border-glow: rgba(99, 102, 241, 0.45);
-            --text-primary: #F8FAFC;
-            --text-secondary: #94A3B8;
-            --text-muted: #64748B;
-            --accent-primary: #818CF8;
-            --accent-primary-hover: #6366F1;
+            --border-glow: rgba(255, 255, 255, 0.18);
+            --text-primary: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --accent-primary: #E2E8F0;
+            --accent-primary-hover: #FFFFFF;
             --accent-emerald: #10B981;
             --accent-emerald-subtle: rgba(16, 185, 129, 0.15);
-            --accent-brand-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-            --accent-purple-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            --accent-brand-gradient: linear-gradient(135deg, #64748B 0%, #475569 100%);
+            --accent-purple-gradient: linear-gradient(135deg, #64748B 0%, #334155 100%);
             --danger: #EF4444;
             --danger-subtle: rgba(239, 68, 68, 0.18);
-            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.6);
-            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.12);
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.45);
+            --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 255, 255, 0.05);
 
-            --topbar-bg: #0F121C;
+            --topbar-bg: #1A1D26;
             --topbar-border: rgba(255, 255, 255, 0.1);
             --topbar-title-color: #F8FAFC;
-            --icon-btn-bg: #151825;
+            --icon-btn-bg: #202430;
             --icon-btn-border: rgba(255, 255, 255, 0.12);
-            --icon-btn-color: #94A3B8;
-            --icon-btn-hover-bg: #1C2030;
-            --icon-btn-hover-color: #F8FAFC;
-            --buddy-btn-bg: rgba(99, 102, 241, 0.16);
-            --buddy-btn-border: rgba(99, 102, 241, 0.45);
-            --buddy-btn-color: #C7D2FE;
-            --send-btn-bg: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            --icon-btn-color: #CBD5E1;
+            --icon-btn-hover-bg: #282D3C;
+            --icon-btn-hover-color: #FFFFFF;
+            --buddy-btn-bg: rgba(255, 255, 255, 0.08);
+            --buddy-btn-border: rgba(255, 255, 255, 0.2);
+            --buddy-btn-color: #F1F5F9;
+            --send-btn-bg: linear-gradient(135deg, #64748B 0%, #475569 100%);
             --send-btn-color: #FFFFFF;
-            --send-btn-shadow: 0 4px 18px rgba(79, 70, 229, 0.5), 0 0 14px rgba(99, 102, 241, 0.35);
-            --mic-btn-bg: #151825;
+            --send-btn-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 255, 255, 0.1);
+            --mic-btn-bg: #202430;
             --mic-btn-border: rgba(255, 255, 255, 0.12);
-            --mic-btn-color: #94A3B8;
-            --input-box-border: rgba(255, 255, 255, 0.14);
-            --input-box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 22px rgba(99, 102, 241, 0.18);
-            --input-focus-border: #818CF8;
-            --input-focus-ring: rgba(99, 102, 241, 0.35);
+            --mic-btn-color: #CBD5E1;
+            --input-box-border: rgba(255, 255, 255, 0.15);
+            --input-box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 255, 255, 0.05);
+            --input-focus-border: #94A3B8;
+            --input-focus-ring: rgba(255, 255, 255, 0.16);
             --ai-card-border: 1px solid rgba(255, 255, 255, 0.12);
-            --ai-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 20px rgba(99, 102, 241, 0.1);
-            --starter-card-bg: linear-gradient(180deg, #151825 0%, #10121C 100%);
+            --ai-card-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 16px rgba(255, 255, 255, 0.04);
+            --starter-card-bg: linear-gradient(180deg, #202430 0%, #171A23 100%);
             --starter-card-border: rgba(255, 255, 255, 0.1);
-            --starter-card-hover-border: rgba(129, 140, 248, 0.75);
-            --starter-card-hover-bg: #1A1E2D;
-            --starter-card-hover-shadow: 0 10px 32px rgba(0, 0, 0, 0.8), 0 0 28px rgba(99, 102, 241, 0.3);
-            --code-bg: #07080D;
+            --starter-card-hover-border: rgba(255, 255, 255, 0.35);
+            --starter-card-hover-bg: #272B38;
+            --starter-card-hover-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(255, 255, 255, 0.09);
+            --code-bg: #0F1117;
             --code-border: rgba(255, 255, 255, 0.12);
-            --code-header-bg: #0F121C;
-            --code-header-color: #C7D2FE;
+            --code-header-bg: #1A1D26;
+            --code-header-color: #E2E8F0;
             --code-text: #F1F5F9;
-            --table-header-bg: #151825;
+            --table-header-bg: #202430;
             --table-header-color: #F8FAFC;
             --table-border: rgba(255, 255, 255, 0.1);
-            --table-even-bg: #0F121C;
+            --table-even-bg: #1A1D26;
             --kbd-bg: rgba(255, 255, 255, 0.08);
             --kbd-border: rgba(255, 255, 255, 0.14);
             --kbd-color: #CBD5E1;
-            --banner-bg: #131624;
-            --banner-border: rgba(99, 102, 241, 0.55);
-            --banner-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 22px rgba(99, 102, 241, 0.3);
-            --theme-pill-bg: #151825;
+            --banner-bg: #1C202B;
+            --banner-border: rgba(255, 255, 255, 0.2);
+            --banner-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 255, 255, 0.05);
+            --theme-pill-bg: #202430;
             --theme-pill-border: rgba(255, 255, 255, 0.12);
-            --theme-pill-color: #C7D2FE;
+            --theme-pill-color: #E2E8F0;
+        }
+
+        /* Shining Special Accents for Grey Shining Theme */
+        body[data-theme="dark"] .brand-icon {
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
+            background: linear-gradient(135deg, #64748B 0%, #334155 100%);
+        }
+        body[data-theme="dark"] .ai-row .message-bubble {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%), #1C202B;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 255, 255, 0.04);
+        }
+        body[data-theme="dark"] .starter-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%), #202430;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        body[data-theme="dark"] .starter-card:hover {
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+        body[data-theme="dark"] .input-box {
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.55), 0 0 18px rgba(255, 255, 255, 0.06);
+        }
+        body[data-theme="dark"] .input-box:focus-within {
+            border-color: #CBD5E1;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14), 0 0 24px rgba(255, 255, 255, 0.1);
         }
 
         /* 3. THEME: AESTHETIC WARM ROSEWOOD */
@@ -331,32 +359,7 @@
             --theme-pill-color: #EA580C;
         }
 
-        /* Shining Special Accents for Dark Theme */
-        body[data-theme="dark"] .brand-icon {
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.55);
-        }
-        body[data-theme="dark"] .ai-row .message-bubble {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%), #131624;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.12);
-        }
-        body[data-theme="dark"] .starter-card {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.005) 100%), #151825;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        body[data-theme="dark"] .starter-card:hover {
-            border-color: rgba(129, 140, 248, 0.75);
-            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8), 0 0 28px rgba(99, 102, 241, 0.3);
-            transform: translateY(-2px);
-        }
-        body[data-theme="dark"] .input-box {
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 22px rgba(99, 102, 241, 0.18);
-        }
-        body[data-theme="dark"] .input-box:focus-within {
-            border-color: #818CF8;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35), 0 0 28px rgba(99, 102, 241, 0.3);
-        }
+        /* Grey shining styles included above */
 
         * {
             box-sizing: border-box;
@@ -1495,40 +1498,72 @@
             line-height: 1.4;
         }
 
-        /* Bubble Action Bar */
-        .bubble-actions {
+        /* Sleek Modern QA & Actions Bar */
+        .message-actions-bar {
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-top: 10px;
-            padding-top: 8px;
+            gap: 4px;
+            margin-top: 8px;
+            padding-top: 6px;
             border-top: 1px solid var(--border-subtle);
         }
 
-        .action-icon-btn {
+        .msg-action-btn {
             background: transparent;
-            border: 1px solid var(--border-subtle);
+            border: none;
             color: var(--text-muted);
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.72rem;
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
             transition: all 0.15s ease;
         }
 
-        .action-icon-btn:hover {
+        .msg-action-btn:hover {
             color: var(--accent-primary);
-            border-color: var(--accent-primary);
-            background: var(--theme-pill-bg);
+            background: var(--bg-card-hover);
+            transform: translateY(-1px);
         }
 
-        .action-icon-btn.active {
+        .msg-action-btn.active {
             color: var(--accent-emerald);
-            border-color: var(--accent-emerald);
-            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .grounding-container {
+            margin-top: 8px;
+        }
+
+        .grounding-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--accent-emerald);
+            cursor: pointer;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.22);
+            transition: all 0.15s;
+        }
+
+        .grounding-badge:hover {
+            background: rgba(16, 185, 129, 0.14);
+        }
+
+        .grounding-drawer {
+            display: none;
+            margin-top: 8px;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .grounding-drawer.open {
+            display: flex;
         }
 
         /* ================= INPUT BOX AREA ================= */
@@ -1930,8 +1965,8 @@
                             <span>☀️ Pastel Light</span>
                         </button>
                         <button class="theme-opt" onclick="selectTheme('dark')">
-                            <span class="theme-dot" style="background: linear-gradient(135deg, #818CF8, #0A0C14);"></span>
-                            <span>✨ Shining Dark</span>
+                            <span class="theme-dot" style="background: linear-gradient(135deg, #CBD5E1, #14171E);"></span>
+                            <span>✨ Grey Shining</span>
                         </button>
                         <button class="theme-opt" onclick="selectTheme('rosewood')">
                             <span class="theme-dot" style="background: linear-gradient(135deg, #9F3A4B, #FFF6F7);"></span>
@@ -2117,7 +2152,7 @@
         // --- 4-Theme Engine (Pastel Light, Shining Dark, Rosewood, Sunset Peach) ---
         const THEME_INFO = {
             light: { label: "Pastel Light", icon: "☀️" },
-            dark: { label: "Shining Dark", icon: "✨" },
+            dark: { label: "Grey Shining", icon: "✨" },
             rosewood: { label: "Rosewood", icon: "🌹" },
             sunset: { label: "Sunset Peach", icon: "🍑" }
         };
@@ -2301,12 +2336,11 @@
             const bubble = btn.closest(".message-bubble");
             const content = bubble.querySelector(".message-content").innerText;
             navigator.clipboard.writeText(content).then(() => {
-                const span = btn.querySelector("span");
-                const old = span.textContent;
-                span.textContent = "Copied!";
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
                 btn.classList.add("active");
                 setTimeout(() => {
-                    span.textContent = old;
+                    btn.innerHTML = originalHtml;
                     btn.classList.remove("active");
                 }, 1600);
             });
@@ -2337,7 +2371,6 @@
                     <span class="equalizer-bar"></span>
                     <span class="equalizer-bar"></span>
                 </div>
-                <span>Speaking...</span>
             `;
             btn.classList.add("active");
 
@@ -2351,8 +2384,7 @@
         function resetSpeakerBtn() {
             if (activeSpeakerBtn) {
                 activeSpeakerBtn.innerHTML = `
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                    <span>Read Aloud</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 `;
                 activeSpeakerBtn.classList.remove("active");
                 activeSpeakerBtn = null;
@@ -2361,16 +2393,19 @@
 
         function handleFeedback(btn, type) {
             const bar = btn.closest(".message-actions-bar");
+            if (!bar) return;
             bar.querySelectorAll(".feedback-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
         }
 
         function toggleGroundingDrawer(btn) {
-            const drawer = btn.parentElement.querySelector(".grounding-drawer");
+            const container = btn.closest(".grounding-container");
+            const drawer = container ? container.querySelector(".grounding-drawer") : null;
             if (drawer) {
                 drawer.classList.toggle("open");
                 const isOpened = drawer.classList.contains("open");
-                btn.querySelector(".chevron-icon").style.transform = isOpened ? "rotate(180deg)" : "rotate(0deg)";
+                const chevron = btn.querySelector(".chevron-icon");
+                if (chevron) chevron.style.transform = isOpened ? "rotate(180deg)" : "rotate(0deg)";
             }
         }
 
@@ -2749,20 +2784,20 @@
                 const avatarText = isUser ? "You" : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
                 const senderName = isUser ? "You" : "College AI";
 
-                // Grounding sources markup
+                // Grounding sources: ONLY display if actual verified sources exist!
                 const sources = msg.sources || [];
                 const sourcesCount = sources.length;
                 let groundingHtml = "";
 
-                if (!isUser) {
+                if (!isUser && sourcesCount > 0) {
                     const drawerItems = sources.map(s => `
                         <div class="source-card">
                             <div class="source-card-header">
                                 <span class="source-card-name">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-                                    <span>${escapeHtml(s.filename)}</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                                    <span>${escapeHtml(getFriendlyDocName(s.filename))}</span>
                                 </span>
-                                <span class="source-card-match">${escapeHtml(s.match || 'Match')}</span>
+                                <span class="source-card-match">${escapeHtml(s.match || 'Verified')}</span>
                             </div>
                             <div class="source-card-snippet">"${escapeHtml(s.snippet || '')}"</div>
                         </div>
@@ -2770,17 +2805,13 @@
 
                     groundingHtml = `
                         <div class="grounding-container">
-                            <button class="grounding-toggle-btn" onclick="toggleGroundingDrawer(this)">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                <span>${sourcesCount > 0 ? `Verified via Vector DB (${sourcesCount} Sources)` : 'RAG Grounded • Vector DB Verified'}</span>
-                                <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            <button class="grounding-badge" onclick="toggleGroundingDrawer(this)" title="Click to view verified source passages">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>Verified Sources (${sourcesCount})</span>
+                                <svg class="chevron-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                             </button>
                             <div class="grounding-drawer">
-                                ${sourcesCount > 0 ? drawerItems : `
-                                    <div class="source-card">
-                                        <div class="source-card-snippet">Grounded in indexed college records and multi-turn student memory.</div>
-                                    </div>
-                                `}
+                                ${drawerItems}
                             </div>
                         </div>
                     `;
@@ -2804,22 +2835,13 @@
                             ${!isUser ? `
                                 <div class="message-actions-bar">
                                     <button class="msg-action-btn" onclick="copyAnswer(this)" title="Copy answer">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                        <span>Copy</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                     </button>
-                                    <button class="msg-action-btn" onclick="toggleSpeechAnswer(this)" title="Read aloud (Voice TTS)">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                                        <span>Read Aloud</span>
+                                    <button class="msg-action-btn" onclick="toggleSpeechAnswer(this)" title="Read aloud">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                                     </button>
-                                    <button class="msg-action-btn" onclick="regenerateLastAnswer()" title="Regenerate answer">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                                        <span>Regenerate</span>
-                                    </button>
-                                    <button class="msg-action-btn feedback-btn" onclick="handleFeedback(this, 'up')" title="Helpful answer">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                                    </button>
-                                    <button class="msg-action-btn feedback-btn" onclick="handleFeedback(this, 'down')" title="Needs improvement">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
+                                    <button class="msg-action-btn" onclick="regenerateLastAnswer()" title="Regenerate">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                                     </button>
                                 </div>
                             ` : ''}
