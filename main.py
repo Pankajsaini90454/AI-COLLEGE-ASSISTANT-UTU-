@@ -210,6 +210,14 @@ def list_documents():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        # Privacy Purge: Permanently remove any deleted/personal documents from PostgreSQL database
+        cursor.execute("""
+            DELETE FROM college_docs 
+            WHERE filename NOT IN ('639222394440338142.pdf', 'BTECH 2,3&4 YR.pdf');
+        """)
+        conn.commit()
+
         cursor.execute("""
             SELECT filename, COUNT(*) as chunks_count
             FROM college_docs

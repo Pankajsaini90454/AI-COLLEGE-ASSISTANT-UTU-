@@ -2227,7 +2227,12 @@
                 const res = await fetch(`${API_BASE}/api/documents`);
                 if (res.ok) {
                     const data = await res.json();
-                    const docs = data.documents || [];
+                    let docs = data.documents || [];
+                    // Strict Privacy Filter: Never display personal documents (10th, 12th, cv, etc.)
+                    docs = docs.filter(d => {
+                        const name = (d.filename || '').toLowerCase();
+                        return !name.includes('10th') && !name.includes('12th') && !name.includes('cv') && !name.includes('resume') && !name.includes('certificate');
+                    });
                     countEl.textContent = `${docs.length} indexed`;
 
                     if (docs.length === 0) {
@@ -2726,10 +2731,11 @@
 
                                 let match;
                                 while (true) {
-                                    match = voiceSentenceBuffer.match(/([.?!।॥]+(?:\s+|$)|[\n\r]+)/);
+                                    // Sub-second response: trigger first sentence after just 8 chars + punctuation
+                                    match = voiceSentenceBuffer.match(/([.?!।॥,;:]+(?:\s+|$)|[\n\r]+)/);
                                     if (match) {
                                         const cutIdx = match.index + match[0].length;
-                                        if (cutIdx >= 14 || voiceSentenceBuffer.length >= 40) {
+                                        if (cutIdx >= 8 || voiceSentenceBuffer.length >= 26) {
                                             const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
                                             voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
                                             if (sentence && sentence.length > 2) {
@@ -2738,12 +2744,11 @@
                                             continue;
                                         }
                                     }
-                                    if (voiceSentenceBuffer.length >= 65) {
-                                        const commaMatch = voiceSentenceBuffer.match(/([,:;—–-]+(?:\s+|$))/);
-                                        if (commaMatch) {
-                                            const cutIdx = commaMatch.index + commaMatch[0].length;
-                                            const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
-                                            voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
+                                    if (voiceSentenceBuffer.length >= 40) {
+                                        const spaceIdx = voiceSentenceBuffer.lastIndexOf(' ');
+                                        if (spaceIdx >= 16) {
+                                            const sentence = voiceSentenceBuffer.slice(0, spaceIdx).trim();
+                                            voiceSentenceBuffer = voiceSentenceBuffer.slice(spaceIdx);
                                             if (sentence && sentence.length > 2) {
                                                 queueSentenceForTTS(sentence);
                                             }
@@ -3167,37 +3172,45 @@
         function interruptAndStopSpeaking() {
             console.log("[Buddy Voice] Interruption triggered: halting playback immediately.");
 
+            // 1. Immediately pause and destroy any playing audio
+            if (currentAudioItem && currentAudioItem.audio) {
+                try { currentAudioItem.audio.pause(); } catch(e){}
+            }
+            if (window.speechSynthesis) {
+                try { window.speechSynthesis.cancel(); } catch(e){}
+            }
+
+            // 2. Abort active network stream
             if (currentStreamAbortController) {
                 try { currentStreamAbortController.abort(); } catch (e) {}
                 currentStreamAbortController = null;
             }
 
+            // 3. Clear audio queue
             resetVoiceQueue();
-            if (window.speechSynthesis) {
-                try { window.speechSynthesis.cancel(); } catch (e) {}
-            }
 
             isStreaming = false;
+            isAudioCurrentlyPlaying = false;
+            buddyState = "listening";
+            isBuddyVoiceQuery = true;
+
             const typingIndicator = document.getElementById("typing-indicator");
             if (typingIndicator) typingIndicator.style.display = "none";
             const sendBtn = document.getElementById("send-btn");
             if (sendBtn) sendBtn.disabled = false;
 
-            ignoreAudioUntil = Date.now() + 800;
+            ignoreAudioUntil = Date.now() + 500;
 
             if (buddyRecognition) {
                 try { buddyRecognition.abort(); } catch (e) {}
             }
 
             playDeactivationChime();
-            isAudioCurrentlyPlaying = false;
-            buddyState = "listening";
-            isBuddyVoiceQuery = true;
 
             const inputField = document.getElementById("user-input");
             if (inputField) inputField.value = "";
 
-            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+            updateBuddyBanner(`🎙️ <strong>Buddy is listening!</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
         }
 
         function stopBuddyVoiceAssistant(sayFarewell = true) {
@@ -3210,19 +3223,20 @@
             const inputField = document.getElementById("user-input");
             if (inputField) inputField.value = "";
 
-            if (currentClonedAudio) {
-                try { currentClonedAudio.pause(); } catch (e) { }
-                currentClonedAudio = null;
+            if (currentAudioItem && currentAudioItem.audio) {
+                try { currentAudioItem.audio.pause(); } catch (e) { }
             }
 
+            resetVoiceQueue();
+
             if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
+                try { window.speechSynthesis.cancel(); } catch (e) {}
             }
 
             playDeactivationChime();
 
             if (sayFarewell && window.speechSynthesis) {
-                const farewell = new SpeechSynthesisUtterance("Goodbye Pankaj! Voice assistant stopped.");
+                const farewell = new SpeechSynthesisUtterance("Goodbye! Voice assistant stopped.");
                 farewell.rate = 1.1;
                 const voices = window.speechSynthesis.getVoices();
                 const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.name.includes("India") || v.name.includes("Google") || v.name.includes("Natural"));
@@ -3233,7 +3247,6 @@
             toggleBuddyVoiceMode(false);
         }
 
-        // --- Cloned Voice Audio Playback via Fish Audio (/tts) with Browser Fallback ---
         function resetVoiceQueue() {
             if (currentAudioItem && currentAudioItem.audio) {
                 try { currentAudioItem.audio.pause(); } catch (e) {}
@@ -3265,7 +3278,8 @@
                 text: cleaned,
                 status: 'pending',
                 audio: null,
-                url: null
+                url: null,
+                useBrowserTTS: false
             };
             voiceQueue.push(item);
 
@@ -3273,6 +3287,19 @@
         }
 
         async function fetchClonedTTSItem(item) {
+            let timedOut = false;
+            // High-speed fallback: If cloud TTS takes more than 1.3s, use instant zero-latency browser speech!
+            const ttsTimeout = setTimeout(() => {
+                timedOut = true;
+                if (item.status === 'pending') {
+                    item.useBrowserTTS = true;
+                    item.status = 'ready';
+                    if (!isAudioCurrentlyPlaying) {
+                        playNextInVoiceQueue();
+                    }
+                }
+            }, 1300);
+
             try {
                 const resp = await fetch("/tts", {
                     method: "POST",
@@ -3280,21 +3307,26 @@
                     body: JSON.stringify({ text: item.text.slice(0, 350) })
                 });
 
+                clearTimeout(ttsTimeout);
+
                 if (!resp.ok) {
                     throw new Error(`TTS server status ${resp.status}`);
                 }
 
                 const audioBlob = await resp.blob();
-                item.url = URL.createObjectURL(audioBlob);
-                item.audio = new Audio(item.url);
-                item.status = 'ready';
+                if (!timedOut) {
+                    item.url = URL.createObjectURL(audioBlob);
+                    item.audio = new Audio(item.url);
+                    item.status = 'ready';
 
-                if (!isAudioCurrentlyPlaying) {
-                    playNextInVoiceQueue();
+                    if (!isAudioCurrentlyPlaying) {
+                        playNextInVoiceQueue();
+                    }
                 }
             } catch (err) {
-                console.warn("[TTS Queue Notice] Item failed:", item.text, err);
-                item.status = 'failed';
+                clearTimeout(ttsTimeout);
+                item.useBrowserTTS = true;
+                item.status = 'ready';
                 if (!isAudioCurrentlyPlaying) {
                     playNextInVoiceQueue();
                 }
@@ -3328,10 +3360,38 @@
             buddyState = "speaking";
             currentAudioItem = nextItem;
 
-            updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> "${escapeHtml(nextItem.text.slice(0, 42))}..."`, "speaking");
-
+            updateBuddyBanner(`🔊 <strong>Speaking:</strong> "${escapeHtml(nextItem.text.slice(0, 42))}..."`, "speaking");
             safeStartRecognition();
 
+            // Instant Browser Speech Synthesis mode
+            if (nextItem.useBrowserTTS) {
+                if (!window.speechSynthesis) {
+                    isAudioCurrentlyPlaying = false;
+                    playNextInVoiceQueue();
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(nextItem.text);
+                utterance.rate = 1.05;
+                const voices = window.speechSynthesis.getVoices();
+                const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.lang.includes("hi-IN") || v.name.includes("India") || v.name.includes("Natural"));
+                if (preferredVoice) utterance.voice = preferredVoice;
+
+                utterance.onend = () => {
+                    currentAudioItem = null;
+                    isAudioCurrentlyPlaying = false;
+                    playNextInVoiceQueue();
+                };
+                utterance.onerror = () => {
+                    currentAudioItem = null;
+                    isAudioCurrentlyPlaying = false;
+                    playNextInVoiceQueue();
+                };
+                window.speechSynthesis.speak(utterance);
+                return;
+            }
+
+            // Cloud Cloned Audio Mode
             const advanceQueue = () => {
                 if (nextItem.url) URL.revokeObjectURL(nextItem.url);
                 currentAudioItem = null;
@@ -3359,7 +3419,7 @@
                 try { buddyRecognition.abort(); } catch (e) {}
             }
 
-            ignoreAudioUntil = Date.now() + 450;
+            ignoreAudioUntil = Date.now() + 400;
             buddyState = "listening";
             isBuddyVoiceQuery = true;
 
@@ -3470,29 +3530,43 @@
 
                     // 1b. Stop Command ("stop", "ruk jao", "ruko", "bas", "chup", "band karo"):
                     if (isInterruptCommand(fullRaw)) {
-                        console.log("[Buddy Voice] User shouted STOP during playback:", fullRaw);
+                        console.log("[Buddy Voice] STOP detected during playback:", fullRaw);
                         interruptAndStopSpeaking();
                         return;
                     }
 
-                    // 1c. ACOUSTIC ECHO CHECK: Did microphone transcribe the AI's own voice from the speakers?
-                    const currentSpokenRef = (currentSpeakingTextAll + " " + (currentAudioItem?.text || "") + " " + lastAssistantResponseText).trim();
-                    if (isSelfEcho(fullRaw, currentSpokenRef)) {
-                        // Drop speaker output so it NEVER self-transcribes or loops!
-                        return;
-                    }
-
-                    // 1d. NEW QUESTION BARGE-IN:
-                    // If the user spoke words that do NOT match the AI's speech, and it has at least 2 words:
+                    // 1c. QUESTION INTENT DETECTION (User asking new question in the middle of answer):
+                    const questionWords = [
+                        "kya", "kab", "kaise", "kitne", "kitna", "kahan", "batao", "bataiye", "bolo",
+                        "what", "when", "where", "how", "why", "who", "which", "tell", "show", "explain",
+                        "holiday", "holidays", "chutti", "vacation", "calendar", "syllabus", "subject", "subjects",
+                        "exam", "exams", "sessional", "semester", "credit", "credits", "date", "dates"
+                    ];
+                    const hasQuestionWord = questionWords.some(w => fullRaw.includes(w));
                     const words = fullRaw.split(/\s+/).filter(w => w.length > 1);
-                    if (words.length >= 2) {
-                        console.log("[Buddy Voice] User asked a NEW question during playback:", fullRaw);
+
+                    // If user spoke a question or at least 2 distinct words that are not exact audio echo:
+                    const currentSpokenRef = (currentAudioItem?.text || "").trim();
+                    const isEcho = isSelfEcho(fullRaw, currentSpokenRef);
+
+                    if ((hasQuestionWord || words.length >= 2) && !isEcho) {
+                        console.log("[Buddy Voice] User shifted to NEW question during playback:", fullRaw);
+
+                        // Halt existing playback and network stream immediately!
+                        if (currentAudioItem && currentAudioItem.audio) {
+                            try { currentAudioItem.audio.pause(); } catch(e){}
+                        }
+                        if (window.speechSynthesis) {
+                            try { window.speechSynthesis.cancel(); } catch(e){}
+                        }
                         if (currentStreamAbortController) {
                             try { currentStreamAbortController.abort(); } catch (e) {}
                             currentStreamAbortController = null;
                         }
+
                         resetVoiceQueue();
                         isStreaming = false;
+                        isAudioCurrentlyPlaying = false;
 
                         const inputField = document.getElementById("user-input");
                         if (inputField) {
@@ -3503,7 +3577,10 @@
                             isBuddyVoiceQuery = true;
                             startBuddySilenceTimer(hasFinal);
                         }
+                        return;
                     }
+
+                    // Drop speaker echo
                     return;
                 }
 
@@ -3529,9 +3606,8 @@
                 if (buddyState === "listening") {
                     let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i, "").trim();
                     if (!cleanQuery) cleanQuery = fullRaw;
-                    cleanQuery = cleanQuery.replace(/^[,\-–—\s]+/, "");
+                    cleanQuery = cleanQuery.replace(/^[,-–—\s]+/, "");
 
-       
                     if (cleanQuery.length > 1) {
                         // Echo check against last response:
                         if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {
@@ -3563,7 +3639,7 @@
                         if (isBuddyModeActive && !isRecognitionActive) {
                             safeStartRecognition();
                         }
-                    }, 120);
+                    }, 100);
                 }
             };
 

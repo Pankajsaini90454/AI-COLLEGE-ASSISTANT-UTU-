@@ -46,6 +46,12 @@ def init_db():
             );
         """)
 
+        # 3. Privacy Purge: Remove deleted personal documents from database
+        cursor.execute("""
+            DELETE FROM college_docs 
+            WHERE filename NOT IN ('639222394440338142.pdf', 'BTECH 2,3&4 YR.pdf');
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()
