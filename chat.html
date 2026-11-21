@@ -1189,21 +1189,34 @@
 
         /* Subtle modern subtitle & clean quick-pills to balance empty space */
         .welcome-subtitle {
-            font-size: 1.02rem;
+            font-size: 1.15rem;
             color: var(--text-secondary);
             margin-top: 14px;
-            margin-bottom: 22px;
+            margin-bottom: 24px;
             font-weight: 500;
             max-width: 580px;
             line-height: 1.5;
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            min-height: 1.6em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
 
-        .welcome-subtitle.visible {
-            opacity: 0.9;
-            transform: translateY(0);
+        .welcome-subtitle.streaming-sub::after {
+            content: '';
+            display: inline-block;
+            width: 2.5px;
+            height: 1.1em;
+            background-color: var(--accent-primary);
+            margin-left: 6px;
+            border-radius: 1.5px;
+            animation: streamCursorBlink 0.75s infinite;
+            vertical-align: middle;
+        }
+
+        .welcome-subtitle.streaming-sub.stream-done::after {
+            display: none;
         }
 
         .welcome-pills-row {
@@ -2815,6 +2828,7 @@
         }
 
         let welcomeStreamTimer = null;
+        let welcomeSubTimer = null;
         let isWelcomeStreaming = false;
 
         function typeWelcomeTitle(force = false) {
@@ -2822,20 +2836,29 @@
             if (!el) return;
             const subEl = document.getElementById("welcome-sub");
             const pillsEl = document.getElementById("welcome-pills");
-            const fullText = "Welcome to AI Assistant";
+            const titleText = "Welcome to AI Assistant";
+            const subText = "How can I help you today?";
 
-            // If already actively streaming the current text and not forced, don't interrupt
+            // If already actively streaming and not forced, don't interrupt
             if (isWelcomeStreaming && !force) return;
 
             if (welcomeStreamTimer) {
                 clearInterval(welcomeStreamTimer);
                 welcomeStreamTimer = null;
             }
+            if (welcomeSubTimer) {
+                clearInterval(welcomeSubTimer);
+                welcomeSubTimer = null;
+            }
 
             isWelcomeStreaming = true;
             el.textContent = "";
             el.classList.remove("stream-done");
-            if (subEl) subEl.classList.remove("visible");
+            if (subEl) {
+                subEl.textContent = "";
+                subEl.classList.remove("stream-done");
+                subEl.classList.add("streaming-sub");
+            }
             if (pillsEl) pillsEl.classList.remove("visible");
 
             // Deliberate initial pause so cursor blinks cleanly on load, giving an authentic "opening" feel
@@ -2853,19 +2876,42 @@
                         return;
                     }
                     idx++;
-                    el.textContent = fullText.slice(0, idx);
-                    if (idx >= fullText.length) {
+                    el.textContent = titleText.slice(0, idx);
+                    if (idx >= titleText.length) {
                         clearInterval(welcomeStreamTimer);
                         welcomeStreamTimer = null;
-                        isWelcomeStreaming = false;
+                        el.classList.add("stream-done");
+
+                        // Now stream the subtitle: "How can I help you today?"
                         setTimeout(() => {
-                            if (el) el.classList.add("stream-done");
-                            if (subEl) subEl.classList.add("visible");
-                            if (pillsEl) pillsEl.classList.add("visible");
-                        }, 500);
+                            if (!subEl || !document.contains(subEl)) {
+                                isWelcomeStreaming = false;
+                                return;
+                            }
+                            let subIdx = 0;
+                            welcomeSubTimer = setInterval(() => {
+                                if (!subEl || !document.contains(subEl)) {
+                                    clearInterval(welcomeSubTimer);
+                                    welcomeSubTimer = null;
+                                    isWelcomeStreaming = false;
+                                    return;
+                                }
+                                subIdx++;
+                                subEl.textContent = subText.slice(0, subIdx);
+                                if (subIdx >= subText.length) {
+                                    clearInterval(welcomeSubTimer);
+                                    welcomeSubTimer = null;
+                                    isWelcomeStreaming = false;
+                                    setTimeout(() => {
+                                        subEl.classList.add("stream-done");
+                                        if (pillsEl) pillsEl.classList.add("visible");
+                                    }, 400);
+                                }
+                            }, 55); // 55ms per char: conversational, crisp subtitle stream
+                        }, 250);
                     }
-                }, 115); // 115ms per character gives a smooth, deliberate typewriter stream (~2.5s)
-            }, 350);
+                }, 95); // 95ms per character for title stream
+            }, 300);
         }
 
         function renderChatArea() {
@@ -2884,7 +2930,7 @@
                             <div class="welcome-stream-wrap">
                                 <h2 class="welcome-title streaming-title" id="welcome-streaming-title"></h2>
                             </div>
-                            <p class="welcome-subtitle" id="welcome-sub">Ask anything about syllabus, exam schedules, or academic holiday calendar</p>
+                            <p class="welcome-subtitle streaming-sub" id="welcome-sub"></p>
                             <div class="welcome-pills-row" id="welcome-pills">
                                 <div class="welcome-pill" onclick="askStarter('Show me the 3rd semester subjects and syllabus modules.')">
                                     <span>📚</span> <span>3rd Sem Syllabus</span>
