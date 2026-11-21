@@ -1141,12 +1141,45 @@
             margin-bottom: 12px;
         }
 
+        @keyframes floatHover {
+            0% {
+                transform: translateY(0px);
+                filter: drop-shadow(0 4px 12px var(--border-glow));
+            }
+            50% {
+                transform: translateY(-8px);
+                filter: drop-shadow(0 14px 28px var(--border-glow));
+            }
+            100% {
+                transform: translateY(0px);
+                filter: drop-shadow(0 4px 12px var(--border-glow));
+            }
+        }
+
         .welcome-title {
-            font-size: 1.85rem;
+            font-size: 2.2rem;
             font-weight: 800;
             letter-spacing: -0.03em;
             color: var(--text-primary);
             margin-bottom: 8px;
+            display: inline-block;
+            animation: floatHover 3.2s ease-in-out infinite;
+            cursor: default;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+        }
+
+        .welcome-title:hover {
+            transform: translateY(-11px) scale(1.025);
+            color: var(--accent-primary);
+        }
+
+        .welcome-icon-box {
+            animation: floatHover 3.8s ease-in-out infinite 0.4s;
+            transition: transform 0.3s ease;
+        }
+
+        .welcome-icon-box:hover {
+            transform: translateY(-10px) scale(1.08);
         }
 
         .welcome-desc {
@@ -2042,7 +2075,7 @@
                     </button>
 
                     <!-- Voice Mic Button -->
-                    <button class="input-action-btn mic-btn" id="mic-btn" onclick="toggleSpeechRecognition()"
+                    <button class="input-action-btn mic-btn" id="mic-btn" onclick="toggleBuddyVoiceMode()"
                         title="Voice input (Click to speak)">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2737,7 +2770,7 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
                             <span>UTU Academic Portal • Student Assistant</span>
                         </div>
-                        <h2 class="welcome-title">College Academic Assistant</h2>
+                        <h2 class="welcome-title floating-title" title="Welcome to AI Assistant">Welcome to AI Assistant</h2>
                         <p class="welcome-desc">Verified information for official university syllabus, course subjects, academic calendar, and exam schedules.</p>
                         
                         <div class="starter-grid">
@@ -3569,6 +3602,7 @@
             const cleaned = cleanTextForSpeech(sentence);
             if (!cleaned || cleaned.length < 2) return;
 
+            const isFirstSentence = (nextQueueId === 0);
             const item = {
                 id: nextQueueId++,
                 text: cleaned,
@@ -3579,12 +3613,22 @@
             };
             voiceQueue.push(item);
 
+            // SUB-SECOND GUARANTEE (<1s): Sentence 0 speaks IMMEDIATELY via browser TTS (0ms delay)!
+            if (isFirstSentence) {
+                item.useBrowserTTS = true;
+                item.status = 'ready';
+                if (!isAudioCurrentlyPlaying) {
+                    playNextInVoiceQueue();
+                }
+                return;
+            }
+
             fetchClonedTTSItem(item);
         }
 
         async function fetchClonedTTSItem(item) {
             let timedOut = false;
-            // High-speed fallback: If cloud TTS takes more than 1.3s, use instant zero-latency browser speech!
+            // High-speed fallback: If cloud TTS takes more than 750ms, use instant zero-latency browser speech!
             const ttsTimeout = setTimeout(() => {
                 timedOut = true;
                 if (item.status === 'pending') {
@@ -3594,7 +3638,7 @@
                         playNextInVoiceQueue();
                     }
                 }
-            }, 1300);
+            }, 750);
 
             try {
                 const resp = await fetch("/tts", {
@@ -3726,220 +3770,13 @@
         }
 
         function safeStartRecognition() {
-            if (!buddyRecognition || !isBuddyModeActive) return;
+            if (!buddyRecognition) {
+                buddyRecognition = initBuddyRecognition();
+            }
             if (isRecognitionActive) return;
             try {
                 buddyRecognition.start();
             } catch (e) {}
-        }
-
-        function fallbackBrowserTTS(text) {
-            if (!window.speechSynthesis) {
-                resumeBuddyListening();
-                return;
-            }
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.05;
-            const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.name.includes("India") || v.name.includes("Google") || v.name.includes("Natural"));
-            if (preferredVoice) utterance.voice = preferredVoice;
-
-            utterance.onend = () => { resumeBuddyListening(); };
-            utterance.onerror = () => { resumeBuddyListening(); };
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function resumeBuddyListening() {
-            if (!isBuddyModeActive) return;
-
-            // CRITICAL: Stays in active listening mode so user does NOT have to repeat "Hello Buddy"!
-            buddyState = "listening";
-            isBuddyVoiceQuery = true;
-            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
-
-            if (buddyRecognition) {
-                try {
-                    buddyRecognition.start();
-                } catch (e) { }
-            }
-        }
-
-        function startBuddySilenceTimer(isFinalResult = false) {
-            if (buddySilenceTimer) clearTimeout(buddySilenceTimer);
-            // Ultra-fast response: 550ms for final result, 800ms for interim (down from 1300ms)
-            const delay = isFinalResult ? 350 : 600;
-            buddySilenceTimer = setTimeout(() => {
-                const inputField = document.getElementById("user-input");
-                const q = inputField ? inputField.value.trim() : "";
-                if (q.length > 1 && !isStreaming) {
-                    updateBuddyBanner(`⚡ Thinking...`, "listening");
-                    sendMessage();
-                }
-            }, delay);
-        }
-
-        function initBuddyRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Brave.");
-                return null;
-            }
-
-            const rec = new SpeechRecognition();
-            rec.continuous = true;
-            rec.interimResults = true;
-            rec.lang = 'en-IN'; // Multi-lingual friendly (English & Hinglish)
-
-            rec.onstart = () => {
-                isRecognitionActive = true;
-                console.log("[Buddy Voice] Speech recognition online.");
-            };
-
-            rec.onresult = (event) => {
-                if (!isBuddyModeActive) return;
-
-                let interimTranscript = "";
-                let finalTranscript = "";
-                let hasFinal = false;
-
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript + " ";
-                        hasFinal = true;
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
-
-                const fullRaw = (finalTranscript + interimTranscript).trim().toLowerCase();
-                if (!fullRaw) return;
-
-                // 1. BARGE-IN INTERRUPTION (AI is speaking or streaming):
-                if (buddyState === "speaking" || isAudioCurrentlyPlaying || isStreaming) {
-                    // 1a. Exit Command ("bye", "alvida"):
-                    if (isExitCommand(fullRaw)) {
-                        stopBuddyVoiceAssistant(true);
-                        return;
-                    }
-
-                    // 1b. Stop Command ("stop", "ruk jao", "ruko", "bas", "chup", "band karo"):
-                    if (isInterruptCommand(fullRaw)) {
-                        console.log("[Buddy Voice] STOP detected during playback:", fullRaw);
-                        interruptAndStopSpeaking();
-                        return;
-                    }
-
-                    // 1c. QUESTION INTENT DETECTION (User asking new question in the middle of answer):
-                    const questionWords = [
-                        "kya", "kab", "kaise", "kitne", "kitna", "kahan", "batao", "bataiye", "bolo",
-                        "what", "when", "where", "how", "why", "who", "which", "tell", "show", "explain",
-                        "holiday", "holidays", "chutti", "vacation", "calendar", "syllabus", "subject", "subjects",
-                        "exam", "exams", "sessional", "semester", "credit", "credits", "date", "dates"
-                    ];
-                    const hasQuestionWord = questionWords.some(w => fullRaw.includes(w));
-                    const words = fullRaw.split(/\s+/).filter(w => w.length > 1);
-
-                    // If user spoke a question or at least 2 distinct words that are not exact audio echo:
-                    const currentSpokenRef = (currentAudioItem?.text || "").trim();
-                    const isEcho = isSelfEcho(fullRaw, currentSpokenRef);
-
-                    if ((hasQuestionWord || words.length >= 2) && !isEcho) {
-                        console.log("[Buddy Voice] User shifted to NEW question during playback:", fullRaw);
-
-                        // Halt existing playback and network stream immediately!
-                        if (currentAudioItem && currentAudioItem.audio) {
-                            try { currentAudioItem.audio.pause(); } catch(e){}
-                        }
-                        if (window.speechSynthesis) {
-                            try { window.speechSynthesis.cancel(); } catch(e){}
-                        }
-                        if (currentStreamAbortController) {
-                            try { currentStreamAbortController.abort(); } catch (e) {}
-                            currentStreamAbortController = null;
-                        }
-
-                        resetVoiceQueue();
-                        isStreaming = false;
-                        isAudioCurrentlyPlaying = false;
-
-                        const inputField = document.getElementById("user-input");
-                        if (inputField) {
-                            let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i, "").trim();
-                            if (!cleanQuery) cleanQuery = fullRaw;
-                            inputField.value = cleanQuery;
-                            autoResizeTextarea(inputField);
-                            isBuddyVoiceQuery = true;
-                            startBuddySilenceTimer(hasFinal);
-                        }
-                        return;
-                    }
-
-                    // Drop speaker echo
-                    return;
-                }
-
-                // 2. Reject audio during deaf window:
-                if (Date.now() < ignoreAudioUntil) {
-                    return;
-                }
-
-                // 3. Exit Command while listening:
-                if (isExitCommand(fullRaw)) {
-                    stopBuddyVoiceAssistant(true);
-                    return;
-                }
-
-                // 4. Stop Command while listening:
-                if (isInterruptCommand(fullRaw)) {
-                    const inputField = document.getElementById("user-input");
-                    if (inputField) inputField.value = "";
-                    return;
-                }
-
-                // 5. Normal Conversational Listening:
-                if (buddyState === "listening") {
-                    let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i, "").trim();
-                    if (!cleanQuery) cleanQuery = fullRaw;
-                    cleanQuery = cleanQuery.replace(/^[,-–—\s]+/, "");
-
-                    if (cleanQuery.length > 1) {
-                        // Echo check against last response:
-                        if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {
-                            console.log("[Buddy Voice] Late acoustic echo rejected:", cleanQuery);
-                            return;
-                        }
-
-                        const inputField = document.getElementById("user-input");
-                        inputField.value = cleanQuery;
-                        autoResizeTextarea(inputField);
-                        isBuddyVoiceQuery = true;
-                        startBuddySilenceTimer(hasFinal);
-                    }
-                }
-            };
-
-            rec.onerror = (event) => {
-                console.warn("[Buddy Voice] Speech recognition notice:", event.error);
-                if (event.error === 'not-allowed') {
-                    alert("Microphone permission denied. Please allow microphone access in your browser address bar.");
-                    stopBuddyVoiceAssistant(false);
-                }
-            };
-
-            rec.onend = () => {
-                isRecognitionActive = false;
-                if (isBuddyModeActive) {
-                    setTimeout(() => {
-                        if (isBuddyModeActive && !isRecognitionActive) {
-                            safeStartRecognition();
-                        }
-                    }, 100);
-                }
-            };
-
-            return rec;
         }
 
         function toggleBuddyVoiceMode(forceState = null) {
@@ -3947,51 +3784,30 @@
             isBuddyModeActive = nextState;
 
             const btn = document.getElementById("buddy-toggle-btn");
+            const micBtn = document.getElementById("mic-btn");
             const banner = document.getElementById("buddy-banner");
 
             if (isBuddyModeActive) {
+                if (btn) btn.classList.add("active");
+                if (micBtn) micBtn.classList.add("active");
+                if (banner) banner.classList.add("active");
+                buddyState = "listening";
+                isBuddyVoiceQuery = true;
+                updateBuddyBanner(`🎙️ <strong>Buddy is listening!</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+
                 if (!buddyRecognition) {
                     buddyRecognition = initBuddyRecognition();
                 }
-                if (!buddyRecognition) {
-                    isBuddyModeActive = false;
-                    return;
-                }
-
-                try {
-                    buddyRecognition.start();
-                } catch (e) {
-                    console.warn("Recognition start note:", e);
-                }
-
+                safeStartRecognition();
                 playActivationChime();
-                // Direct jump to LISTENING: ready to take questions immediately!
-                buddyState = "listening";
-                isBuddyVoiceQuery = true;
-                if (btn) btn.classList.add("active");
-                if (banner) banner.style.display = "flex";
-                updateBuddyBanner(`🎙️ <strong>Buddy is listening!</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
-
             } else {
-                if (buddyRecognition) {
-                    try { buddyRecognition.stop(); } catch (e) { }
-                }
-                if (window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                }
-                if (buddySilenceTimer) {
-                    clearTimeout(buddySilenceTimer);
-                    buddySilenceTimer = null;
-                }
-
+                if (btn) btn.classList.remove("active");
+                if (micBtn) micBtn.classList.remove("active");
+                if (banner) banner.classList.remove("active");
                 buddyState = "idle";
                 isBuddyVoiceQuery = false;
-                speechSentenceQueue = [];
-                isSpeakingSentence = false;
-                streamSpeechBuffer = "";
-
-                if (btn) btn.classList.remove("active");
-                if (banner) banner.style.display = "none";
+                resetVoiceQueue();
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
             }
         }
 
@@ -3999,6 +3815,12 @@
         window.addEventListener("DOMContentLoaded", () => {
             const savedTheme = localStorage.getItem("ai_assistant_theme") || "light";
             applyTheme(savedTheme);
+            
+            // Listen for wake word "Hello Buddy"
+            setTimeout(() => {
+                safeStartRecognition();
+            }, 600);
+
             const userInputEl = document.getElementById("user-input");
             if (userInputEl) {
                 userInputEl.addEventListener("keydown", function(e) {
@@ -4013,6 +3835,13 @@
             const input = document.getElementById("user-input");
             if (input) input.focus();
         });
+
+        // Unlock browser audio context on first click anywhere
+        window.addEventListener("click", () => {
+            if (!isRecognitionActive) {
+                safeStartRecognition();
+            }
+        }, { once: true });
     </script>
 </body>
 
