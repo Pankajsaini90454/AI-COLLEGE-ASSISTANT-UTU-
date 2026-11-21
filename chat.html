@@ -1148,6 +1148,7 @@
             letter-spacing: -0.035em;
             color: var(--text-primary);
             margin: 0;
+            min-height: 1.25em;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -2769,23 +2770,28 @@
             hasStreamedWelcome = true;
             el.textContent = "";
             el.classList.remove("stream-done");
-            let idx = 0;
-            welcomeStreamTimer = setInterval(() => {
-                if (!el || !document.contains(el)) {
-                    clearInterval(welcomeStreamTimer);
-                    welcomeStreamTimer = null;
-                    return;
-                }
-                idx++;
-                el.textContent = fullText.slice(0, idx);
-                if (idx >= fullText.length) {
-                    clearInterval(welcomeStreamTimer);
-                    welcomeStreamTimer = null;
-                    setTimeout(() => {
-                        if (el) el.classList.add("stream-done");
-                    }, 800);
-                }
-            }, 42);
+
+            // Deliberate initial pause so cursor blinks cleanly on load, giving an authentic "opening" feel
+            setTimeout(() => {
+                if (!el || !document.contains(el)) return;
+                let idx = 0;
+                welcomeStreamTimer = setInterval(() => {
+                    if (!el || !document.contains(el)) {
+                        clearInterval(welcomeStreamTimer);
+                        welcomeStreamTimer = null;
+                        return;
+                    }
+                    idx++;
+                    el.textContent = fullText.slice(0, idx);
+                    if (idx >= fullText.length) {
+                        clearInterval(welcomeStreamTimer);
+                        welcomeStreamTimer = null;
+                        setTimeout(() => {
+                            if (el) el.classList.add("stream-done");
+                        }, 1000);
+                    }
+                }, 90); // 90ms per character: smooth, visible typing pace (~2s total)
+            }, 350);
         }
 
         function renderChatArea() {
