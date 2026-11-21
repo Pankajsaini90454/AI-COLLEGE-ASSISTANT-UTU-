@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTU Assistant Pro | Enterprise College RAG</title>
+    <title>UTU Assistant | Student Academic Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -12,37 +12,37 @@
         rel="stylesheet">
     <style>
         :root {
-            --bg-base: #07080d;
-            --bg-sidebar: #0d0f18;
-            --bg-sidebar-card: #141726;
-            --bg-card-hover: #1b2033;
-            --bg-chat-canvas: #07080d;
-            --bg-bubble-ai: #111422;
-            --bg-bubble-user: linear-gradient(135deg, #2e1065 0%, #1e1b4b 50%, #1e1035 100%);
-            --bg-input: rgba(17, 20, 34, 0.85);
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.18);
-            --border-glow: rgba(99, 102, 241, 0.35);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent-primary: #6366f1;
-            --accent-primary-hover: #4f46e5;
-            --accent-emerald: #10b981;
-            --accent-emerald-subtle: rgba(16, 185, 129, 0.12);
-            --accent-purple-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            --accent-emerald-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            --accent-cyan-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-            --danger: #ef4444;
-            --danger-subtle: rgba(239, 68, 68, 0.15);
+            --bg-base: #FAF6F7;
+            --bg-sidebar: #FFFFFF;
+            --bg-sidebar-card: #FFFFFF;
+            --bg-card-hover: #FFF1F4;
+            --bg-chat-canvas: #FCF9FA;
+            --bg-bubble-ai: #FFFFFF;
+            --bg-bubble-user: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+            --bg-input: #FFFFFF;
+            --border-subtle: #F0DFE4;
+            --border-hover: #E2CDD3;
+            --border-glow: rgba(225, 29, 72, 0.2);
+            --text-primary: #1E293B;
+            --text-secondary: #475569;
+            --text-muted: #8896A6;
+            --accent-primary: #E11D48;
+            --accent-primary-hover: #BE123C;
+            --accent-emerald: #059669;
+            --accent-emerald-subtle: rgba(5, 150, 105, 0.1);
+            --accent-purple-gradient: linear-gradient(135deg, #E11D48 0%, #F43F5E 50%, #BE123C 100%);
+            --accent-emerald-gradient: linear-gradient(135deg, #059669 0%, #047857 100%);
+            --accent-cyan-gradient: linear-gradient(135deg, #E11D48 0%, #FB7185 100%);
+            --danger: #E11D48;
+            --danger-subtle: #FFE4E8;
             --radius-xs: 4px;
             --radius-sm: 8px;
             --radius-md: 12px;
-            --radius-lg: 18px;
-            --radius-xl: 24px;
-            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.35);
-            --shadow-glow: 0 0 24px rgba(99, 102, 241, 0.2);
-            --sidebar-width: 290px;
+            --radius-lg: 16px;
+            --radius-xl: 22px;
+            --shadow-subtle: 0 2px 10px rgba(190, 18, 60, 0.04);
+            --shadow-glow: 0 0 20px rgba(225, 29, 72, 0.12);
+            --sidebar-width: 280px;
         }
 
         * {
@@ -61,16 +61,8 @@
             overflow: hidden;
         }
 
-        /* Ambient glowing background */
         .ambient-glow {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 380px;
-            background: radial-gradient(ellipse 65% 50% at 50% -15%, rgba(99, 102, 241, 0.15), transparent 75%);
-            pointer-events: none;
-            z-index: 1;
+            display: none;
         }
 
         /* ================= SIDEBAR ================= */
@@ -84,8 +76,7 @@
             user-select: none;
             position: relative;
             z-index: 30;
-            transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-            backdrop-filter: blur(20px);
+            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .sidebar.collapsed {
@@ -113,25 +104,25 @@
             width: 38px;
             height: 38px;
             border-radius: var(--radius-sm);
-            background: var(--accent-purple-gradient);
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
+            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
             flex-shrink: 0;
             transition: transform 0.2s ease;
         }
 
         .brand:hover .brand-icon {
-            transform: scale(1.05) rotate(-2deg);
+            transform: scale(1.05);
         }
 
         .brand-text h1 {
             font-size: 0.98rem;
             font-weight: 800;
             letter-spacing: -0.02em;
-            color: #ffffff;
+            color: #0F172A;
             line-height: 1.2;
             display: flex;
             align-items: center;
@@ -150,16 +141,16 @@
             font-family: 'JetBrains Mono', monospace;
             padding: 1px 7px;
             border-radius: 4px;
-            background: rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            color: #a5b4fc;
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             font-weight: 600;
         }
 
         .tech-pill.emerald {
-            background: rgba(16, 185, 129, 0.12);
-            border-color: rgba(16, 185, 129, 0.25);
-            color: #6ee7b7;
+            background: #ECFDF5;
+            border-color: #A7F3D0;
+            color: #047857;
         }
 
         /* Action: New Chat Button */
@@ -169,9 +160,9 @@
 
         .new-chat-btn {
             width: 100%;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.14) 50%, rgba(16, 185, 129, 0.12) 100%);
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            color: var(--text-primary);
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             padding: 11px 14px;
             border-radius: var(--radius-md);
             cursor: pointer;
@@ -181,14 +172,15 @@
             font-weight: 700;
             font-size: 0.88rem;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(190, 18, 60, 0.05);
         }
 
         .new-chat-btn:hover {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.22) 50%, rgba(16, 185, 129, 0.2) 100%);
-            border-color: var(--accent-primary);
+            background: #FFE4EA;
+            border-color: #E11D48;
+            color: #9F1239;
             transform: translateY(-1px);
-            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.15);
         }
 
         .new-chat-btn-left {
@@ -198,16 +190,16 @@
         }
 
         .new-chat-btn-left svg {
-            color: #a5b4fc;
+            color: #BE123C;
         }
 
         .new-chat-badge {
             font-size: 0.68rem;
             padding: 2px 6px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #FFFFFF;
+            border: 1px solid #FECDD6;
             border-radius: 4px;
-            color: var(--text-secondary);
+            color: #BE123C;
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -219,17 +211,18 @@
         .sidebar-search-box {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.03);
+            background: #FAF5F6;
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-sm);
             padding: 6px 10px;
             gap: 8px;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
         }
 
         .sidebar-search-box:focus-within {
             border-color: var(--accent-primary);
-            background: rgba(255, 255, 255, 0.05);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.1);
         }
 
         .sidebar-search-box svg {
@@ -277,7 +270,7 @@
         }
 
         .threads-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.08);
+            background: #F0DFE4;
             border-radius: 4px;
         }
 
@@ -295,13 +288,13 @@
         }
 
         .thread-item:hover {
-            background-color: var(--bg-sidebar-card);
-            color: var(--text-primary);
+            background-color: #FFF1F4;
+            color: #BE123C;
         }
 
         .thread-item.active {
-            background: rgba(99, 102, 241, 0.14);
-            color: #ffffff;
+            background: #FFF1F4;
+            color: #9F1239;
             font-weight: 600;
             border-left: 3px solid var(--accent-primary);
             padding-left: 9px;
@@ -374,7 +367,7 @@
         .sidebar-knowledge-section {
             border-top: 1px solid var(--border-subtle);
             padding: 12px 14px;
-            background: rgba(13, 15, 24, 0.6);
+            background: #FAF6F7;
         }
 
         .knowledge-header {
@@ -403,7 +396,7 @@
         }
 
         .doc-list::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: #F0DFE4;
         }
 
         .doc-item {
@@ -412,8 +405,8 @@
             justify-content: space-between;
             padding: 5px 8px;
             border-radius: var(--radius-xs);
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
             font-size: 0.76rem;
             color: var(--text-secondary);
         }
@@ -431,15 +424,16 @@
             font-size: 0.65rem;
             font-family: 'JetBrains Mono', monospace;
             padding: 1px 5px;
-            background: rgba(16, 185, 129, 0.1);
-            color: #6ee7b7;
+            background: #ECFDF5;
+            color: #047857;
+            border: 1px solid #A7F3D0;
             border-radius: 3px;
             flex-shrink: 0;
         }
 
         .upload-dropzone {
-            background: var(--bg-sidebar-card);
-            border: 1px dashed rgba(255, 255, 255, 0.14);
+            background: #FFFFFF;
+            border: 1px dashed #FECDD6;
             border-radius: var(--radius-sm);
             padding: 10px;
             text-align: center;
@@ -449,13 +443,13 @@
 
         .upload-dropzone:hover {
             border-color: var(--accent-primary);
-            background: rgba(99, 102, 241, 0.07);
+            background: #FFF1F4;
         }
 
         .upload-dropzone p {
             font-size: 0.74rem;
-            color: var(--text-secondary);
-            font-weight: 500;
+            color: #BE123C;
+            font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -483,7 +477,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            background: rgba(9, 10, 16, 0.9);
+            background: #FAF6F7;
         }
 
         .telemetry-row {
@@ -495,7 +489,8 @@
         .telemetry-badge {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.66rem;
-            color: #a5b4fc;
+            color: #BE123C;
+            font-weight: 600;
         }
 
         /* ================= MAIN CONTENT ================= */
@@ -503,7 +498,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: radial-gradient(circle at 50% 0%, rgba(30, 27, 75, 0.28) 0%, rgba(7, 8, 13, 1) 65%);
+            background: var(--bg-chat-canvas);
             height: 100%;
             overflow: hidden;
             position: relative;
@@ -518,8 +513,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
-            background: rgba(7, 8, 13, 0.75);
-            backdrop-filter: blur(20px);
+            background: #FFFFFF;
             z-index: 10;
         }
 
@@ -530,7 +524,7 @@
         }
 
         .sidebar-toggle-btn {
-            background: rgba(255, 255, 255, 0.03);
+            background: #FFFFFF;
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             width: 34px;
@@ -544,9 +538,9 @@
         }
 
         .sidebar-toggle-btn:hover {
-            color: var(--text-primary);
-            border-color: var(--border-hover);
-            background: rgba(255, 255, 255, 0.08);
+            color: var(--accent-primary);
+            border-color: #FECDD6;
+            background: #FFF1F4;
         }
 
         .topbar-title-wrap {
@@ -558,7 +552,7 @@
         .topbar-title {
             font-size: 0.94rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: #0F172A;
             letter-spacing: -0.01em;
             max-width: 320px;
             white-space: nowrap;
@@ -579,9 +573,9 @@
             font-size: 0.74rem;
             padding: 5px 12px;
             border-radius: 20px;
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            color: var(--accent-emerald);
+            background: #ECFDF5;
+            border: 1px solid #A7F3D0;
+            color: #047857;
             font-weight: 600;
             font-family: 'JetBrains Mono', monospace;
         }
@@ -590,27 +584,12 @@
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background-color: var(--accent-emerald);
-            box-shadow: 0 0 10px var(--accent-emerald);
-            animation: pulse-dot 2.2s infinite;
-        }
-
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.35;
-                transform: scale(0.85);
-            }
+            background-color: #059669;
+            box-shadow: 0 0 6px rgba(5, 150, 105, 0.4);
         }
 
         .icon-btn {
-            background: rgba(255, 255, 255, 0.03);
+            background: #FFFFFF;
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             padding: 6px 12px;
@@ -625,47 +604,45 @@
         }
 
         .icon-btn:hover {
-            color: var(--text-primary);
-            border-color: var(--border-hover);
-            background: rgba(255, 255, 255, 0.08);
+            color: var(--accent-primary);
+            border-color: #FECDD6;
+            background: #FFF1F4;
         }
 
-        /* --- Hello Buddy (JARVIS Mode) Styles --- */
+        /* --- Hello Buddy Voice Button Styles --- */
         .buddy-toggle-btn {
             display: flex;
             align-items: center;
             gap: 6px;
-            background: rgba(99, 102, 241, 0.12);
-            border: 1px solid rgba(99, 102, 241, 0.32);
-            color: #c7d2fe;
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             transition: all 0.25s ease;
         }
 
         .buddy-toggle-btn:hover {
-            background: rgba(99, 102, 241, 0.25);
-            border-color: rgba(99, 102, 241, 0.55);
-            color: #ffffff;
-            box-shadow: 0 0 14px rgba(99, 102, 241, 0.35);
+            background: #FFE4EA;
+            border-color: #E11D48;
+            color: #9F1239;
         }
 
         .buddy-toggle-btn.active {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(99, 102, 241, 0.25) 100%);
-            border-color: rgba(16, 185, 129, 0.5);
-            color: #6ee7b7;
-            box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+            border-color: #BE123C;
+            color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.2);
         }
 
         .buddy-banner {
             margin: 0 24px 10px;
             padding: 9px 16px;
             border-radius: var(--radius-md);
-            background: rgba(15, 17, 28, 0.92);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: #FFFFFF;
+            border: 1px solid #FECDD6;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 18px rgba(190, 18, 60, 0.08);
             animation: slideUpBuddy 0.25s ease;
             z-index: 10;
         }
@@ -675,7 +652,6 @@
                 opacity: 0;
                 transform: translateY(8px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -705,9 +681,9 @@
             font-family: 'JetBrains Mono', monospace;
             padding: 2px 8px;
             border-radius: 12px;
-            background: rgba(99, 102, 241, 0.18);
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            color: #a5b4fc;
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             font-weight: 600;
         }
 
@@ -723,8 +699,8 @@
         }
 
         .buddy-close-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.1);
+            color: var(--danger);
+            background: var(--danger-subtle);
         }
 
         .buddy-wave {
@@ -737,49 +713,24 @@
         .buddy-wave span {
             width: 3px;
             height: 6px;
-            background: #818cf8;
+            background: #FDA4AF;
             border-radius: 2px;
             transition: all 0.2s ease;
         }
 
         .buddy-wave.active span {
-            background: #6ee7b7;
+            background: #E11D48;
             animation: buddyWaveAnim 0.75s ease-in-out infinite alternate;
         }
 
-        .buddy-wave.active span:nth-child(1) {
-            height: 14px;
-            animation-delay: 0.0s;
-        }
-
-        .buddy-wave.active span:nth-child(2) {
-            height: 18px;
-            animation-delay: 0.18s;
-        }
-
-        .buddy-wave.active span:nth-child(3) {
-            height: 12px;
-            animation-delay: 0.36s;
-        }
-
-        .buddy-wave.active span:nth-child(4) {
-            height: 16px;
-            animation-delay: 0.12s;
-        }
-
         .buddy-wave.speaking span {
-            background: #38bdf8;
+            background: #059669;
             animation: buddyWaveAnim 0.6s ease-in-out infinite alternate;
         }
 
         @keyframes buddyWaveAnim {
-            0% {
-                transform: scaleY(0.4);
-            }
-
-            100% {
-                transform: scaleY(1.35);
-            }
+            0% { transform: scaleY(0.4); }
+            100% { transform: scaleY(1.35); }
         }
 
         /* Voice Mode Synchronized Card */
@@ -789,10 +740,11 @@
             gap: 12px;
             padding: 10px 16px;
             border-radius: var(--radius-md);
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.28);
-            color: #c7d2fe;
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             font-size: 0.88rem;
+            font-weight: 500;
             animation: fadeIn 0.25s ease;
         }
 
@@ -801,9 +753,9 @@
             align-items: center;
             gap: 6px;
             font-size: 0.72rem;
-            color: #6ee7b7;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #047857;
+            background: #ECFDF5;
+            border: 1px solid #A7F3D0;
             padding: 3px 9px;
             border-radius: 12px;
             margin-bottom: 10px;
@@ -815,21 +767,14 @@
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 8px #10b981;
+            background: #059669;
+            box-shadow: 0 0 6px #10B981;
             animation: pulseDot 1s infinite alternate;
         }
 
         @keyframes pulseDot {
-            from {
-                opacity: 0.4;
-                transform: scale(0.85);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1.15);
-            }
+            from { opacity: 0.4; transform: scale(0.85); }
+            to { opacity: 1; transform: scale(1.15); }
         }
 
         .voice-wave-anim {
@@ -842,35 +787,16 @@
         .voice-wave-anim span {
             width: 3px;
             height: 14px;
-            background: #818cf8;
+            background: #E11D48;
             border-radius: 2px;
             animation: buddyWaveAnim 0.7s ease-in-out infinite alternate;
         }
 
-        .voice-wave-anim span:nth-child(1) {
-            height: 10px;
-            animation-delay: 0.0s;
-        }
-
-        .voice-wave-anim span:nth-child(2) {
-            height: 16px;
-            animation-delay: 0.15s;
-        }
-
-        .voice-wave-anim span:nth-child(3) {
-            height: 12px;
-            animation-delay: 0.3s;
-        }
-
-        .voice-wave-anim span:nth-child(4) {
-            height: 18px;
-            animation-delay: 0.1s;
-        }
-
-        .voice-wave-anim span:nth-child(5) {
-            height: 8px;
-            animation-delay: 0.25s;
-        }
+        .voice-wave-anim span:nth-child(1) { height: 10px; animation-delay: 0.0s; }
+        .voice-wave-anim span:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+        .voice-wave-anim span:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+        .voice-wave-anim span:nth-child(4) { height: 18px; animation-delay: 0.1s; }
+        .voice-wave-anim span:nth-child(5) { height: 8px; animation-delay: 0.25s; }
 
         /* Chat Area */
         .chat-box {
@@ -881,6 +807,7 @@
             flex-direction: column;
             gap: 24px;
             scroll-behavior: smooth;
+            background: var(--bg-chat-canvas);
         }
 
         .chat-box::-webkit-scrollbar {
@@ -888,7 +815,7 @@
         }
 
         .chat-box::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12);
+            background: #F0DFE4;
             border-radius: 6px;
         }
 
@@ -902,53 +829,22 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(14px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .welcome-avatar-orb {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 20px;
-            border-radius: 20px;
-            background: var(--accent-purple-gradient);
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 18px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.45);
+            box-shadow: 0 6px 20px rgba(225, 29, 72, 0.22);
             position: relative;
-        }
-
-        .welcome-avatar-orb::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: 24px;
-            background: var(--accent-purple-gradient);
-            opacity: 0.35;
-            filter: blur(8px);
-            z-index: -1;
-            animation: pulse-orb 3s infinite alternate;
-        }
-
-        @keyframes pulse-orb {
-            0% {
-                transform: scale(0.95);
-                opacity: 0.25;
-            }
-
-            100% {
-                transform: scale(1.05);
-                opacity: 0.5;
-            }
         }
 
         .welcome-hero-badge {
@@ -957,31 +853,28 @@
             gap: 8px;
             padding: 5px 14px;
             border-radius: 20px;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
             font-size: 0.78rem;
             font-weight: 600;
-            color: #a5b4fc;
+            color: #BE123C;
             margin-bottom: 16px;
         }
 
         .welcome-title {
             font-size: 2.1rem;
             font-weight: 800;
-            color: #ffffff;
+            color: #0F172A;
             letter-spacing: -0.03em;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             line-height: 1.25;
-            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .welcome-desc {
             font-size: 0.96rem;
             color: var(--text-secondary);
             line-height: 1.6;
-            margin-bottom: 32px;
+            margin-bottom: 30px;
         }
 
         .starter-grid {
@@ -992,31 +885,35 @@
         }
 
         .starter-card {
-            background: var(--bg-sidebar-card);
+            background: #FFFFFF;
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             padding: 18px;
             cursor: pointer;
             transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(190, 18, 60, 0.03);
         }
 
         .starter-card:hover {
-            background: var(--bg-card-hover);
-            border-color: rgba(99, 102, 241, 0.5);
+            background: #FFF8F9;
+            border-color: #FDA4AF;
             transform: translateY(-2px);
-            box-shadow: 0 8px 26px rgba(99, 102, 241, 0.25);
+            box-shadow: 0 6px 18px rgba(225, 29, 72, 0.08);
         }
 
         .starter-card-title {
             font-size: 0.92rem;
             font-weight: 700;
-            color: #ffffff;
+            color: #0F172A;
             margin-bottom: 5px;
             display: flex;
             align-items: center;
             gap: 9px;
+        }
+
+        .starter-card-title svg {
+            color: #E11D48;
         }
 
         .starter-card-desc {
@@ -1035,15 +932,8 @@
         }
 
         @keyframes messageFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(6px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .user-row {
@@ -1055,20 +945,34 @@
         }
 
         .user-row .message-bubble {
-            background: var(--bg-bubble-user);
-            border: 1px solid rgba(139, 92, 246, 0.35);
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+            border: none;
             border-radius: 18px 18px 4px 18px;
             max-width: 78%;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 4px 16px rgba(225, 29, 72, 0.2);
+            color: #FFFFFF;
+        }
+
+        .user-row .message-sender {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .user-row .message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .user-row .message-content {
+            color: #FFFFFF;
         }
 
         .ai-row .message-bubble {
-            background: var(--bg-bubble-ai);
+            background: #FFFFFF;
             border: 1px solid var(--border-subtle);
             border-radius: 18px 18px 18px 4px;
             flex: 1;
             max-width: 88%;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 2px 12px rgba(190, 18, 60, 0.04);
+            color: var(--text-primary);
         }
 
         .avatar {
@@ -1084,15 +988,16 @@
         }
 
         .user-avatar {
-            background: var(--accent-purple-gradient);
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
             color: white;
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 2px 10px rgba(225, 29, 72, 0.3);
         }
 
         .ai-avatar {
-            background: var(--accent-emerald-gradient);
-            color: white;
-            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.4);
+            background: #FFF1F4;
+            border: 1.5px solid #FECDD6;
+            color: #BE123C;
+            box-shadow: 0 2px 8px rgba(190, 18, 60, 0.06);
             position: relative;
         }
 
@@ -1107,13 +1012,13 @@
             justify-content: space-between;
             margin-bottom: 10px;
             padding-bottom: 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid #F5EAEF;
         }
 
         .message-sender {
             font-size: 0.84rem;
             font-weight: 700;
-            color: var(--text-secondary);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 7px;
@@ -1123,11 +1028,11 @@
             font-size: 0.65rem;
             padding: 1px 7px;
             border-radius: 4px;
-            background: rgba(16, 185, 129, 0.12);
-            color: #6ee7b7;
+            background: #ECFDF5;
+            color: #047857;
             font-family: 'JetBrains Mono', monospace;
             font-weight: 600;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            border: 1px solid #A7F3D0;
         }
 
         .message-time {
@@ -1152,8 +1057,12 @@
         }
 
         .message-content strong {
-            color: #ffffff;
+            color: #0F172A;
             font-weight: 700;
+        }
+
+        .user-row .message-content strong {
+            color: #FFFFFF;
         }
 
         .message-content ul,
@@ -1179,31 +1088,31 @@
         .message-content th,
         .message-content td {
             padding: 8px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
             text-align: left;
         }
 
         .message-content th {
-            background: rgba(255, 255, 255, 0.04);
-            font-weight: 600;
-            color: #ffffff;
+            background: #FFF1F4;
+            font-weight: 700;
+            color: #881337;
         }
 
         .message-content tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.015);
+            background: #FCF9FA;
         }
 
         /* ================= GROUNDING SOURCES DRAWER ================= */
         .grounding-container {
             margin-top: 14px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid var(--border-subtle);
             padding-top: 10px;
         }
 
         .grounding-toggle-btn {
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.22);
-            color: #6ee7b7;
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             font-size: 0.74rem;
             font-family: 'JetBrains Mono', monospace;
             padding: 4px 10px;
@@ -1217,15 +1126,15 @@
         }
 
         .grounding-toggle-btn:hover {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: rgba(16, 185, 129, 0.4);
+            background: #FFE4EA;
+            border-color: #E11D48;
         }
 
         .grounding-drawer {
             display: none;
             margin-top: 10px;
-            background: rgba(10, 12, 20, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #FAF6F7;
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-sm);
             padding: 12px;
             gap: 8px;
@@ -1238,8 +1147,8 @@
         }
 
         .source-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
             border-radius: 6px;
             padding: 8px 10px;
             display: flex;
@@ -1258,7 +1167,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            color: #cbd5e1;
+            color: #0F172A;
             font-weight: 600;
         }
 
@@ -1267,9 +1176,9 @@
             font-size: 0.68rem;
             padding: 1px 6px;
             border-radius: 4px;
-            background: rgba(99, 102, 241, 0.15);
-            color: #a5b4fc;
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: #ECFDF5;
+            color: #047857;
+            border: 1px solid #A7F3D0;
             font-weight: 600;
         }
 
@@ -1288,13 +1197,13 @@
             gap: 6px;
             margin-top: 12px;
             padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid #F5EAEF;
         }
 
         .msg-action-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text-muted);
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
             font-size: 0.72rem;
             padding: 4px 8px;
             border-radius: 6px;
@@ -1306,15 +1215,15 @@
         }
 
         .msg-action-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.18);
+            color: var(--accent-primary);
+            background: #FFF1F4;
+            border-color: #FECDD6;
         }
 
         .msg-action-btn.active {
-            color: var(--accent-emerald);
-            border-color: rgba(16, 185, 129, 0.35);
-            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-primary);
+            border-color: #FDA4AF;
+            background: #FFF1F4;
         }
 
         /* Equalizer Waveform for Audio TTS */
@@ -1327,72 +1236,52 @@
 
         .equalizer-bar {
             width: 2px;
-            background-color: var(--accent-emerald);
+            background-color: var(--accent-primary);
             border-radius: 1px;
             animation: eqBounce 0.8s infinite ease-in-out alternate;
         }
 
-        .equalizer-bar:nth-child(1) {
-            height: 4px;
-            animation-delay: 0.1s;
-        }
-
-        .equalizer-bar:nth-child(2) {
-            height: 10px;
-            animation-delay: 0.3s;
-        }
-
-        .equalizer-bar:nth-child(3) {
-            height: 6px;
-            animation-delay: 0.2s;
-        }
-
-        .equalizer-bar:nth-child(4) {
-            height: 12px;
-            animation-delay: 0.4s;
-        }
+        .equalizer-bar:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+        .equalizer-bar:nth-child(2) { height: 10px; animation-delay: 0.3s; }
+        .equalizer-bar:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+        .equalizer-bar:nth-child(4) { height: 12px; animation-delay: 0.4s; }
 
         @keyframes eqBounce {
-            from {
-                height: 3px;
-            }
-
-            to {
-                height: 12px;
-            }
+            from { height: 3px; }
+            to { height: 12px; }
         }
 
         /* ================= CODE BLOCKS ================= */
         .code-card {
-            background: #06070a;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #FAF6F7;
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             margin: 14px 0;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 2px 10px rgba(190, 18, 60, 0.03);
         }
 
         .code-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #10121d;
+            background: #FFF1F4;
             padding: 8px 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .code-card-lang {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.74rem;
-            color: #10b981;
+            color: #881337;
             text-transform: uppercase;
             font-weight: 700;
         }
 
         .code-copy-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
+            background: #FFFFFF;
+            border: 1px solid #FECDD6;
+            color: #BE123C;
             font-size: 0.72rem;
             padding: 3px 8px;
             border-radius: 4px;
@@ -1404,9 +1293,8 @@
         }
 
         .code-copy-btn:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.25);
+            background: #FFE4EA;
+            border-color: #E11D48;
         }
 
         .code-card pre {
@@ -1416,7 +1304,8 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.88rem;
             line-height: 1.55;
-            color: #e2e8f0;
+            color: #1E293B;
+            background: #FAF6F7;
         }
 
         .code-card code {
@@ -1428,18 +1317,18 @@
 
         .inline-code {
             font-family: 'JetBrains Mono', monospace;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #FFF1F4;
+            border: 1px solid #FECDD6;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.84rem;
-            color: #a7f3d0;
+            color: #BE123C;
         }
 
         /* ================= INPUT COMPOSER ================= */
         .input-container {
             padding: 14px 16% 22px;
-            background: linear-gradient(180deg, rgba(7, 8, 13, 0) 0%, rgba(7, 8, 13, 0.95) 30%, rgba(7, 8, 13, 1) 100%);
+            background: linear-gradient(180deg, rgba(250, 246, 247, 0) 0%, rgba(250, 246, 247, 0.95) 30%, rgba(250, 246, 247, 1) 100%);
             position: relative;
             z-index: 10;
         }
@@ -1447,25 +1336,24 @@
         .input-box {
             display: flex;
             align-items: center;
-            background: var(--bg-input);
-            border: 1px solid var(--border-subtle);
+            background: #FFFFFF;
+            border: 1.5px solid var(--border-subtle);
             border-radius: var(--radius-xl);
             padding: 8px 12px 8px 18px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(24px);
+            box-shadow: 0 4px 20px rgba(190, 18, 60, 0.05);
             transition: all 0.2s;
         }
 
         .input-box:focus-within {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22), 0 8px 32px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12), 0 4px 24px rgba(190, 18, 60, 0.08);
         }
 
         .input-box textarea {
             flex: 1;
             background: transparent;
             border: none;
-            color: var(--text-primary);
+            color: #0F172A;
             font-size: 0.94rem;
             outline: none;
             padding: 8px 6px;
@@ -1489,7 +1377,7 @@
             width: 36px;
             height: 36px;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            background: #FAF5F6;
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             cursor: pointer;
@@ -1500,38 +1388,30 @@
         }
 
         .input-action-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--accent-primary);
+            background: #FFF1F4;
+            border-color: #FECDD6;
             transform: scale(1.05);
         }
 
         .mic-btn.listening {
-            background: rgba(239, 68, 68, 0.25);
+            background: #FEE2E2;
             border-color: var(--danger);
             color: var(--danger);
             animation: mic-pulse 1.4s infinite;
         }
 
         @keyframes mic-pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
         }
 
         .send-btn {
             width: 36px;
             height: 36px;
             border-radius: 10px;
-            background: var(--accent-purple-gradient);
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
             border: none;
             color: white;
             cursor: pointer;
@@ -1539,12 +1419,12 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+            box-shadow: 0 2px 10px rgba(225, 29, 72, 0.25);
         }
 
         .send-btn:hover:not(:disabled) {
             transform: scale(1.06);
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+            box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
         }
 
         .send-btn:disabled {
@@ -1561,12 +1441,20 @@
             color: var(--text-muted);
         }
 
+        .input-footer kbd {
+            background: #F1DFE4;
+            color: #475569;
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid #E2CDD3;
+        }
+
         .typing-indicator {
             display: none;
             align-items: center;
             gap: 7px;
             font-size: 0.76rem;
-            color: #6ee7b7;
+            color: #BE123C;
             font-weight: 600;
         }
 
@@ -1575,7 +1463,7 @@
             align-items: center;
             gap: 7px;
             font-size: 0.76rem;
-            color: #ef4444;
+            color: var(--danger);
             font-weight: 600;
         }
 
@@ -1584,8 +1472,8 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
             z-index: 100;
             align-items: center;
             justify-content: center;
@@ -1597,13 +1485,13 @@
         }
 
         .modal-card {
-            background: var(--bg-sidebar);
-            border: 1px solid var(--border-hover);
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
             width: 90%;
             max-width: 680px;
             padding: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 20px 60px rgba(190, 18, 60, 0.12);
         }
 
         .modal-header {
@@ -1618,7 +1506,7 @@
         .modal-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #ffffff;
+            color: #0F172A;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -1643,8 +1531,9 @@
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: rgba(99, 102, 241, 0.2);
-            color: #a5b4fc;
+            background: #FFF1F4;
+            color: #BE123C;
+            border: 1px solid #FECDD6;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.75rem;
             font-weight: 700;
@@ -1656,7 +1545,7 @@
 
         .step-body h4 {
             font-size: 0.88rem;
-            color: #ffffff;
+            color: #0F172A;
             margin-bottom: 2px;
         }
 
@@ -1668,7 +1557,7 @@
         @media (max-width: 900px) {
             .sidebar {
                 position: absolute;
-                left: -290px;
+                left: -280px;
                 top: 0;
                 bottom: 0;
             }
@@ -1689,7 +1578,7 @@
                 grid-template-columns: 1fr;
             }
         }
-    </style>
+</style>
 </head>
 
 <body>
@@ -1711,8 +1600,8 @@
                 <div class="brand-text">
                     <h1>UTU Assistant</h1>
                     <div class="brand-badges">
-                        <span class="tech-pill">RAG Enterprise</span>
-                        <span class="tech-pill emerald">pgvector</span>
+                        <span class="tech-pill">UTU Portal</span>
+                        <span class="tech-pill emerald">Verified</span>
                     </div>
                 </div>
             </div>
@@ -1768,7 +1657,7 @@
             <div class="upload-dropzone" onclick="document.getElementById('pdf-upload').click()"
                 title="Upload syllabus, marksheet or calendar PDF">
                 <p>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -1809,7 +1698,7 @@
                     </svg>
                 </button>
                 <div class="topbar-title-wrap">
-                    <span class="topbar-title" id="active-thread-title">Enterprise Knowledge Assistant</span>
+                    <span class="topbar-title" id="active-thread-title">UTU Academic Assistant</span>
                     <button class="thread-action-btn" onclick="promptRenameActiveThread()" title="Rename conversation">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -1833,7 +1722,7 @@
                 </button>
 
                 <button class="icon-btn" onclick="openArchModal()" title="View RAG Architecture Flow">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2">
                         <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
                         <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
                         <line x1="6" y1="6" x2="6.01" y2="6"></line>
@@ -1881,7 +1770,7 @@
                     ask anything...</span>
             </div>
             <div class="buddy-banner-right">
-                <span class="buddy-badge">Pankaj Voice AI</span>
+                <span class="buddy-badge">Voice Assistant</span>
                 <button class="buddy-close-btn" onclick="stopBuddyVoiceAssistant(false)"
                     title="Turn off Buddy Voice Mode">✕</button>
             </div>
@@ -1934,7 +1823,7 @@
                         stroke-width="2.2">
                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
-                    <span>Vector Cosine Search & Grounding...</span>
+                    <span>Searching university knowledge base...</span>
                 </div>
                 <div class="voice-recording-pill" id="voice-indicator">
                     <span
@@ -1942,11 +1831,11 @@
                     <span>Listening... speak your question now</span>
                 </div>
                 <span style="margin-left: auto;">Press <kbd
-                        style="background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:3px;">Enter</kbd> to
+                        style="background:#FFF1F4; border:1px solid #FECDD6; color:#BE123C; padding:1px 6px; border-radius:4px; font-weight:600;">Enter</kbd> to
                     send • <kbd
-                        style="background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:3px;">Shift+Enter</kbd>
+                        style="background:#FFF1F4; border:1px solid #FECDD6; color:#BE123C; padding:1px 6px; border-radius:4px; font-weight:600;">Shift+Enter</kbd>
                     newline • <kbd
-                        style="background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:3px;">Ctrl+B</kbd>
+                        style="background:#FFF1F4; border:1px solid #FECDD6; color:#BE123C; padding:1px 6px; border-radius:4px; font-weight:600;">Ctrl+B</kbd>
                     sidebar</span>
             </div>
         </footer>
@@ -1957,13 +1846,13 @@
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div class="modal-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2">
                         <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
                         <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
                         <line x1="6" y1="6" x2="6.01" y2="6"></line>
                         <line x1="6" y1="18" x2="6.01" y2="18"></line>
                     </svg>
-                    <span>Enterprise RAG Pipeline Architecture</span>
+                    <span>UTU Academic Assistant Architecture</span>
                 </div>
                 <button class="modal-close-btn" onclick="closeArchModal()">&times;</button>
             </div>
@@ -1987,7 +1876,7 @@
                 <div class="pipeline-step">
                     <div class="step-num">3</div>
                     <div class="step-body">
-                        <h4>PostgreSQL + pgvector Indexing</h4>
+                        <h4>PostgreSQL + Verified Indexing</h4>
                         <p>Vectors are stored in PostgreSQL with HNSW / Cosine Distance (<code>&lt;=&gt;</code>)
                             indexing for sub-5ms semantic retrieval.</p>
                     </div>
@@ -2349,7 +2238,7 @@
                     listEl.innerHTML = docs.map(d => `
                         <div class="doc-item" title="${escapeHtml(d.filename)} (${d.chunks} chunks)">
                             <div class="doc-item-title">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
                                 <span>${escapeHtml(d.filename)}</span>
                             </div>
                             <span class="doc-chunks-pill">${d.chunks} chunks</span>
@@ -2532,36 +2421,36 @@
                         </div>
                         <div class="welcome-hero-badge">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
-                            <span>Enterprise RAG & pgvector Knowledge Engine</span>
+                            <span>UTU Academic Portal • Student Assistant</span>
                         </div>
-                        <h2 class="welcome-title">College Assistant Intelligence</h2>
-                        <p class="welcome-desc">Direct answers grounded in verified university syllabus, official academic calendars, transcripts, and student records.</p>
+                        <h2 class="welcome-title">College Academic Assistant</h2>
+                        <p class="welcome-desc">Verified information for syllabus, course subjects, academic calendar, exams, and student records.</p>
                         
                         <div class="starter-grid">
                             <div class="starter-card" onclick="askStarter('Tell me about my college and academic program.')">
                                 <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
                                     <span>College & Profile</span>
                                 </div>
                                 <div class="starter-card-desc">Information on Birla Institute of Applied Sciences (BIAS) & UTU</div>
                             </div>
                             <div class="starter-card" onclick="askStarter('What are my 12th marks and GPA?')">
                                 <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
                                     <span>Marks & Transcripts</span>
                                 </div>
                                 <div class="starter-card-desc">Check 12th board marksheet grades, subject scores, and total</div>
                             </div>
                             <div class="starter-card" onclick="askStarter('Show me the 3rd semester subjects and syllabus.')">
                                 <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                                     <span>Syllabus & Modules</span>
                                 </div>
                                 <div class="starter-card-desc">Retrieve semester course subjects, credits, and syllabus topics</div>
                             </div>
                             <div class="starter-card" onclick="askStarter('What are the upcoming college holidays from the calendar?')">
                                 <div class="starter-card-title">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BE123C" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
                                     <span>College Calendar</span>
                                 </div>
                                 <div class="starter-card-desc">Upcoming university vacation dates, events, and exam schedules</div>
@@ -2578,7 +2467,7 @@
                 const isUser = msg.role === "user";
                 const rowClass = isUser ? "user-row" : "ai-row";
                 const avatarClass = isUser ? "user-avatar" : "ai-avatar";
-                const avatarText = isUser ? "You" : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+                const avatarText = isUser ? "You" : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
                 const senderName = isUser ? "You" : "College AI";
 
                 // Grounding sources markup
@@ -2591,7 +2480,7 @@
                         <div class="source-card">
                             <div class="source-card-header">
                                 <span class="source-card-name">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
                                     <span>${escapeHtml(s.filename)}</span>
                                 </span>
                                 <span class="source-card-match">${escapeHtml(s.match || 'Match')}</span>
@@ -2828,21 +2717,41 @@
                         if (parsed.text) {
                             fullText += parsed.text;
 
-                            const isVoiceQuery = isBuddyVoiceQuery && !isTextOnlyRequested(question);
-                            if (!isVoiceQuery) {
-                                contentEl.innerHTML = formatMarkdown(fullText);
-                                chatBox.scrollTop = chatBox.scrollHeight;
-                            } else {
-                                // Voice Mode: Show live generating status so user doesn't see text sitting in silence
-                                contentEl.innerHTML = `
-                                    <div class="voice-audio-card">
-                                        <div class="voice-wave-anim">
-                                            <span></span><span></span><span></span><span></span><span></span>
-                                        </div>
-                                        <span>🎙️ Pankaj Voice is speaking...</span>
-                                    </div>
-                                `;
-                                chatBox.scrollTop = chatBox.scrollHeight;
+                            contentEl.innerHTML = formatMarkdown(fullText);
+                            chatBox.scrollTop = chatBox.scrollHeight;
+
+                            if (isBuddyVoiceQuery && !isTextOnlyRequested(question)) {
+                                voiceSentenceBuffer += parsed.text;
+                                currentSpeakingTextAll += " " + parsed.text;
+
+                                let match;
+                                while (true) {
+                                    match = voiceSentenceBuffer.match(/([.?!।॥]+(?:\s+|$)|[\n\r]+)/);
+                                    if (match) {
+                                        const cutIdx = match.index + match[0].length;
+                                        if (cutIdx >= 14 || voiceSentenceBuffer.length >= 40) {
+                                            const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
+                                            voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
+                                            if (sentence && sentence.length > 2) {
+                                                queueSentenceForTTS(sentence);
+                                            }
+                                            continue;
+                                        }
+                                    }
+                                    if (voiceSentenceBuffer.length >= 65) {
+                                        const commaMatch = voiceSentenceBuffer.match(/([,:;—–-]+(?:\s+|$))/);
+                                        if (commaMatch) {
+                                            const cutIdx = commaMatch.index + commaMatch[0].length;
+                                            const sentence = voiceSentenceBuffer.slice(0, cutIdx).trim();
+                                            voiceSentenceBuffer = voiceSentenceBuffer.slice(cutIdx);
+                                            if (sentence && sentence.length > 2) {
+                                                queueSentenceForTTS(sentence);
+                                            }
+                                            continue;
+                                        }
+                                    }
+                                    break;
+                                }
                             }
                         }
                     } catch (parseErr) {
@@ -2885,14 +2794,19 @@
                 saveThreadToServer(thread);
 
                 // Auto-TTS for Hello Buddy Hands-free Mode (Custom Cloned Voice)
+                lastAssistantResponseText = fullText;
                 if (isBuddyVoiceQuery) {
                     if (isTextOnlyRequested(question)) {
-                        contentEl.innerHTML = formatMarkdown(fullText);
                         updateBuddyBanner(`Displayed in text (as requested)`, "listening");
                         setTimeout(() => { resumeBuddyListening(); }, 1500);
                     } else {
-                        // Synchronized Audio & Text Playback
-                        playClonedVoiceAudio(fullText, contentEl);
+                        if (voiceSentenceBuffer && voiceSentenceBuffer.trim()) {
+                            queueSentenceForTTS(voiceSentenceBuffer.trim());
+                            voiceSentenceBuffer = "";
+                        }
+                        if (!isAudioCurrentlyPlaying && voiceQueue.length === 0) {
+                            resumeBuddyListening();
+                        }
                     }
                 }
 
@@ -2924,6 +2838,7 @@
         function handleKeyDown(event) {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
+                event.stopPropagation();
                 sendMessage();
             }
         }
@@ -2956,7 +2871,7 @@
 
             statusText.style.display = "block";
             statusText.style.color = "#f59e0b";
-            statusText.innerText = "Indexing vector embeddings into pgvector...";
+            statusText.innerText = "Indexing vector embeddings into Verified...";
 
             try {
                 const response = await fetch(`${API_BASE}/upload`, {
@@ -3105,6 +3020,15 @@
         let buddyRecognition = null;
         let buddySilenceTimer = null;
         let isBuddyVoiceQuery = false;
+        let voiceQueue = [];
+        let isAudioCurrentlyPlaying = false;
+        let currentAudioItem = null;
+        let voiceSentenceBuffer = "";
+        let nextQueueId = 0;
+        let ignoreAudioUntil = 0;
+        let currentSpeakingTextAll = "";
+        let lastAssistantResponseText = "";
+        let isRecognitionActive = false;
         let speechSentenceQueue = [];
         let isSpeakingSentence = false;
         let streamSpeechBuffer = "";
@@ -3186,30 +3110,96 @@
                 .trim();
         }
 
-        // --- Fast Stop & Exit Command Detection ---
-        function isStopOrExitCommand(text) {
+        const STOPWORDS = new Set([
+            "is", "am", "are", "was", "were", "the", "a", "an", "and", "or", "in", "on", "at", "to", "for", "of", "with",
+            "hai", "hain", "tha", "the", "thi", "ka", "ki", "ke", "ko", "se", "mein", "me", "par", "pe", "aur", "ya", "aur"
+        ]);
+
+        function isSelfEcho(heardText, aiText) {
+            if (!heardText || !aiText) return false;
+            const cleanH = heardText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, ' ').trim();
+            const cleanA = aiText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, ' ').trim();
+
+            const hWords = cleanH.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.has(w));
+            if (hWords.length === 0) return false;
+
+            const aWords = new Set(cleanA.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.has(w)));
+            if (aWords.size === 0) return false;
+
+            let matchCount = 0;
+            for (const w of hWords) {
+                if (aWords.has(w)) matchCount++;
+            }
+
+            const ratio = matchCount / hWords.length;
+            return ratio >= 0.40;
+        }
+
+        function isInterruptCommand(text) {
             if (!text) return false;
-            const t = text.trim().toLowerCase().replace(/[.,!?;:]/g, "");
+            const t = text.trim().toLowerCase().replace(/[.,!?;:।॥]/g, "");
 
-            const exactStopPhrases = [
-                "stop", "bye", "goodbye", "good bye", "exit", "quit", "cancel",
-                "bye buddy", "bye-bye", "goodbye buddy", "stop buddy", "stop listening",
-                "band karo", "ruk jao", "alvida", "chup ho jao", "khatam karo",
-                "बाय बडी", "बाय", "अलविदा", "रुक जाओ", "रुको", "रुक", "बंद करो", "चुप", "चुप हो जाओ", "रोको", "स्टॉप", "बस", "बस करो"
+            const stopWords = [
+                "stop", "pause", "quiet", "stop speaking", "stop audio",
+                "ruk jao", "ruk ja", "ruko", "chup", "chup ho jao", "chup raho", "band karo", "khatam karo", "roko", "bas karo", "bas",
+                "shut up", "रुक जाओ", "रुक जा", "रुको", "रुक", "चुप", "चुप हो जाओ", "चुप रहो", "बंद करो", "रोको", "स्टॉप", "बस", "बस करो"
             ];
-            if (exactStopPhrases.includes(t)) return true;
-
-            if (/\b(bye buddy|goodbye buddy|stop listening|shut down|bye bye)\b/i.test(t)) return true;
-            if (/\b(रुक जाओ|रुको|रुक|बंद करो|अलविदा|बाय बडी|चुप|स्टॉप|रोको|बस)\b/i.test(t)) return true;
-
-            const words = t.split(/\s+/);
-            if (/^(stop|bye|exit|quit|cancel)\b/i.test(t) && words.length <= 3) return true;
-            if (/\b(stop|bye|exit)$/i.test(t) && words.length <= 3) return true;
-
+            if (stopWords.some(w => t === w || t.startsWith(w + " ") || t.endsWith(" " + w))) return true;
+            if (/\b(stop|pause|quiet|ruk\s*jao|ruk\s*ja|ruko|chup|band\s*karo|shut\s*up|roko)\b/i.test(t)) return true;
+            if (/\b(रुक जाओ|रुक जा|रुको|रुक|चुप|स्टॉप|रोको|बस)\b/i.test(t)) return true;
             return false;
         }
 
-        // --- Full Deactivation of Voice Assistant Mode ---
+        function isExitCommand(text) {
+            if (!text) return false;
+            const t = text.trim().toLowerCase().replace(/[.,!?;:।॥]/g, "");
+
+            const exitWords = [
+                "bye", "bye buddy", "bye-bye", "goodbye", "goodbye buddy", "good bye", "exit", "quit", "cancel",
+                "alvida", "बाय", "बाय बडी", "अलविदा", "अलविदा बडी"
+            ];
+            if (exitWords.some(w => t === w || t.startsWith(w + " ") || t.endsWith(" " + w))) return true;
+            if (/\b(bye\s*buddy|goodbye\s*buddy|bye-bye|goodbye|alvida|अलविदा|बाय\s*बडी)\b/i.test(t)) return true;
+            if (/^(bye|exit|quit)$/i.test(t)) return true;
+            return false;
+        }
+
+        function interruptAndStopSpeaking() {
+            console.log("[Buddy Voice] Interruption triggered: halting playback immediately.");
+
+            if (currentStreamAbortController) {
+                try { currentStreamAbortController.abort(); } catch (e) {}
+                currentStreamAbortController = null;
+            }
+
+            resetVoiceQueue();
+            if (window.speechSynthesis) {
+                try { window.speechSynthesis.cancel(); } catch (e) {}
+            }
+
+            isStreaming = false;
+            const typingIndicator = document.getElementById("typing-indicator");
+            if (typingIndicator) typingIndicator.style.display = "none";
+            const sendBtn = document.getElementById("send-btn");
+            if (sendBtn) sendBtn.disabled = false;
+
+            ignoreAudioUntil = Date.now() + 800;
+
+            if (buddyRecognition) {
+                try { buddyRecognition.abort(); } catch (e) {}
+            }
+
+            playDeactivationChime();
+            isAudioCurrentlyPlaying = false;
+            buddyState = "listening";
+            isBuddyVoiceQuery = true;
+
+            const inputField = document.getElementById("user-input");
+            if (inputField) inputField.value = "";
+
+            updateBuddyBanner(`🎙️ <strong>Listening...</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+        }
+
         function stopBuddyVoiceAssistant(sayFarewell = true) {
             console.log("[Buddy Voice] Shutting down voice assistant completely.");
             if (buddySilenceTimer) {
@@ -3244,82 +3234,147 @@
         }
 
         // --- Cloned Voice Audio Playback via Fish Audio (/tts) with Browser Fallback ---
-        let currentClonedAudio = null;
-
-        async function playClonedVoiceAudio(text, targetEl = null) {
-            const cleaned = cleanTextForSpeech(text);
-            if (!cleaned) {
-                if (targetEl) targetEl.innerHTML = formatMarkdown(text);
-                resumeBuddyListening();
-                return;
+        function resetVoiceQueue() {
+            if (currentAudioItem && currentAudioItem.audio) {
+                try { currentAudioItem.audio.pause(); } catch (e) {}
+                if (currentAudioItem.url) {
+                    try { URL.revokeObjectURL(currentAudioItem.url); } catch (e) {}
+                }
+                currentAudioItem = null;
             }
+            voiceQueue.forEach(item => {
+                if (item.audio) {
+                    try { item.audio.pause(); } catch (e) {}
+                }
+                if (item.url) {
+                    try { URL.revokeObjectURL(item.url); } catch (e) {}
+                }
+            });
+            voiceQueue = [];
+            isAudioCurrentlyPlaying = false;
+            voiceSentenceBuffer = "";
+            nextQueueId = 0;
+        }
 
-            buddyState = "speaking";
-            updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> Speaking answer...`, "speaking");
+        function queueSentenceForTTS(sentence) {
+            const cleaned = cleanTextForSpeech(sentence);
+            if (!cleaned || cleaned.length < 2) return;
 
-            // Pause microphone while speaking
-            if (buddyRecognition) {
-                try { buddyRecognition.stop(); } catch (e) { }
-            }
+            const item = {
+                id: nextQueueId++,
+                text: cleaned,
+                status: 'pending',
+                audio: null,
+                url: null
+            };
+            voiceQueue.push(item);
 
+            fetchClonedTTSItem(item);
+        }
+
+        async function fetchClonedTTSItem(item) {
             try {
                 const resp = await fetch("/tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: cleaned.slice(0, 450) })
+                    body: JSON.stringify({ text: item.text.slice(0, 350) })
                 });
 
                 if (!resp.ok) {
-                    throw new Error(`TTS server returned status ${resp.status}`);
+                    throw new Error(`TTS server status ${resp.status}`);
                 }
 
                 const audioBlob = await resp.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
+                item.url = URL.createObjectURL(audioBlob);
+                item.audio = new Audio(item.url);
+                item.status = 'ready';
 
-                if (currentClonedAudio) {
-                    try { currentClonedAudio.pause(); } catch (e) { }
-                    currentClonedAudio = null;
+                if (!isAudioCurrentlyPlaying) {
+                    playNextInVoiceQueue();
                 }
-
-                const audio = new Audio(audioUrl);
-                currentClonedAudio = audio;
-
-                audio.onended = () => {
-                    URL.revokeObjectURL(audioUrl);
-                    currentClonedAudio = null;
-                    resumeBuddyListening();
-                };
-
-                audio.onerror = (e) => {
-                    console.warn("[Cloned Audio Playback Error]", e);
-                    URL.revokeObjectURL(audioUrl);
-                    currentClonedAudio = null;
-                    if (targetEl) targetEl.innerHTML = formatMarkdown(text);
-                    fallbackBrowserTTS(cleaned);
-                };
-
-                // REVEAL TEXT AND PLAY AUDIO AT THE EXACT SAME INSTANT!
-                if (targetEl) {
-                    targetEl.innerHTML = `
-                        <div class="voice-audio-badge">
-                            <span class="voice-pulse-dot"></span>
-                            <span>Pankaj Cloned Voice</span>
-                        </div>
-                        <div class="voice-text-body">
-                            ${formatMarkdown(text)}
-                        </div>
-                    `;
-                    const chatBox = document.getElementById("chat-box");
-                    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-                }
-
-                await audio.play();
-
             } catch (err) {
-                console.warn("[Cloned Voice Notice] Falling back to browser speech synthesis:", err);
-                if (targetEl) targetEl.innerHTML = formatMarkdown(text);
-                fallbackBrowserTTS(cleaned);
+                console.warn("[TTS Queue Notice] Item failed:", item.text, err);
+                item.status = 'failed';
+                if (!isAudioCurrentlyPlaying) {
+                    playNextInVoiceQueue();
+                }
             }
+        }
+
+        function playNextInVoiceQueue() {
+            if (voiceQueue.length === 0) {
+                isAudioCurrentlyPlaying = false;
+                currentAudioItem = null;
+                if (!isStreaming) {
+                    onAllAudioFinished();
+                }
+                return;
+            }
+
+            const nextItem = voiceQueue[0];
+            if (nextItem.status === 'pending') {
+                isAudioCurrentlyPlaying = false;
+                return;
+            }
+
+            voiceQueue.shift();
+
+            if (nextItem.status === 'failed') {
+                playNextInVoiceQueue();
+                return;
+            }
+
+            isAudioCurrentlyPlaying = true;
+            buddyState = "speaking";
+            currentAudioItem = nextItem;
+
+            updateBuddyBanner(`🔊 <strong>Pankaj Voice:</strong> "${escapeHtml(nextItem.text.slice(0, 42))}..."`, "speaking");
+
+            safeStartRecognition();
+
+            const advanceQueue = () => {
+                if (nextItem.url) URL.revokeObjectURL(nextItem.url);
+                currentAudioItem = null;
+                isAudioCurrentlyPlaying = false;
+                playNextInVoiceQueue();
+            };
+
+            nextItem.audio.onended = advanceQueue;
+            nextItem.audio.onerror = (e) => {
+                console.warn("[Audio Playback Error]", e);
+                advanceQueue();
+            };
+
+            nextItem.audio.play().catch(e => {
+                console.warn("[Audio Play Promise Note]", e);
+                advanceQueue();
+            });
+        }
+
+        function onAllAudioFinished() {
+            isAudioCurrentlyPlaying = false;
+            currentAudioItem = null;
+
+            if (buddyRecognition) {
+                try { buddyRecognition.abort(); } catch (e) {}
+            }
+
+            ignoreAudioUntil = Date.now() + 450;
+            buddyState = "listening";
+            isBuddyVoiceQuery = true;
+
+            const inputField = document.getElementById("user-input");
+            if (inputField) inputField.value = "";
+
+            updateBuddyBanner(`🎙️ <strong>Buddy is listening!</strong> Ask your question, or say <em>"Bye Buddy"</em> to stop.`, "listening");
+        }
+
+        function safeStartRecognition() {
+            if (!buddyRecognition || !isBuddyModeActive) return;
+            if (isRecognitionActive) return;
+            try {
+                buddyRecognition.start();
+            } catch (e) {}
         }
 
         function fallbackBrowserTTS(text) {
@@ -3357,7 +3412,7 @@
         function startBuddySilenceTimer(isFinalResult = false) {
             if (buddySilenceTimer) clearTimeout(buddySilenceTimer);
             // Ultra-fast response: 550ms for final result, 800ms for interim (down from 1300ms)
-            const delay = isFinalResult ? 550 : 800;
+            const delay = isFinalResult ? 350 : 600;
             buddySilenceTimer = setTimeout(() => {
                 const inputField = document.getElementById("user-input");
                 const q = inputField ? inputField.value.trim() : "";
@@ -3381,11 +3436,12 @@
             rec.lang = 'en-IN'; // Multi-lingual friendly (English & Hinglish)
 
             rec.onstart = () => {
-                console.log("[Buddy Voice] Continuous recognition online.");
+                isRecognitionActive = true;
+                console.log("[Buddy Voice] Speech recognition online.");
             };
 
             rec.onresult = (event) => {
-                if (!isBuddyModeActive || isStreaming || buddyState === "speaking") return;
+                if (!isBuddyModeActive) return;
 
                 let interimTranscript = "";
                 let finalTranscript = "";
@@ -3404,39 +3460,84 @@
                 const fullRaw = (finalTranscript + interimTranscript).trim().toLowerCase();
                 if (!fullRaw) return;
 
-                // 1. TOP PRIORITY: Check Exit / Stop Commands immediately
-                if (isStopOrExitCommand(fullRaw)) {
+                // 1. BARGE-IN INTERRUPTION (AI is speaking or streaming):
+                if (buddyState === "speaking" || isAudioCurrentlyPlaying || isStreaming) {
+                    // 1a. Exit Command ("bye", "alvida"):
+                    if (isExitCommand(fullRaw)) {
+                        stopBuddyVoiceAssistant(true);
+                        return;
+                    }
+
+                    // 1b. Stop Command ("stop", "ruk jao", "ruko", "bas", "chup", "band karo"):
+                    if (isInterruptCommand(fullRaw)) {
+                        console.log("[Buddy Voice] User shouted STOP during playback:", fullRaw);
+                        interruptAndStopSpeaking();
+                        return;
+                    }
+
+                    // 1c. ACOUSTIC ECHO CHECK: Did microphone transcribe the AI's own voice from the speakers?
+                    const currentSpokenRef = (currentSpeakingTextAll + " " + (currentAudioItem?.text || "") + " " + lastAssistantResponseText).trim();
+                    if (isSelfEcho(fullRaw, currentSpokenRef)) {
+                        // Drop speaker output so it NEVER self-transcribes or loops!
+                        return;
+                    }
+
+                    // 1d. NEW QUESTION BARGE-IN:
+                    // If the user spoke words that do NOT match the AI's speech, and it has at least 2 words:
+                    const words = fullRaw.split(/\s+/).filter(w => w.length > 1);
+                    if (words.length >= 2) {
+                        console.log("[Buddy Voice] User asked a NEW question during playback:", fullRaw);
+                        if (currentStreamAbortController) {
+                            try { currentStreamAbortController.abort(); } catch (e) {}
+                            currentStreamAbortController = null;
+                        }
+                        resetVoiceQueue();
+                        isStreaming = false;
+
+                        const inputField = document.getElementById("user-input");
+                        if (inputField) {
+                            let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i, "").trim();
+                            if (!cleanQuery) cleanQuery = fullRaw;
+                            inputField.value = cleanQuery;
+                            autoResizeTextarea(inputField);
+                            isBuddyVoiceQuery = true;
+                            startBuddySilenceTimer(hasFinal);
+                        }
+                    }
+                    return;
+                }
+
+                // 2. Reject audio during deaf window:
+                if (Date.now() < ignoreAudioUntil) {
+                    return;
+                }
+
+                // 3. Exit Command while listening:
+                if (isExitCommand(fullRaw)) {
                     stopBuddyVoiceAssistant(true);
                     return;
                 }
 
-                // Wake-word pattern: "hello buddy", "hey buddy", "hi buddy", "ok buddy", "buddy", "हेलो बडी", "हेल्लो बडी"
-                const wakeWordPattern = /(hello buddy|hey buddy|hi buddy|ok buddy|हेलो बडी|हेल्लो बडी|\bbuddy\b)/i;
+                // 4. Stop Command while listening:
+                if (isInterruptCommand(fullRaw)) {
+                    const inputField = document.getElementById("user-input");
+                    if (inputField) inputField.value = "";
+                    return;
+                }
 
-                if (buddyState === "standby") {
-                    if (wakeWordPattern.test(fullRaw)) {
-                        playActivationChime();
-                        buddyState = "listening";
-                        isBuddyVoiceQuery = true;
-                        updateBuddyBanner(`🎙️ <strong>Buddy is listening!</strong> Speak your question...`, "listening");
-
-                        const queryAfterWake = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|हेलो बडी|हेल्लो बडी|\bbuddy\b)/i, "").trim();
-                        const inputField = document.getElementById("user-input");
-                        if (queryAfterWake.length > 2) {
-                            inputField.value = queryAfterWake;
-                            autoResizeTextarea(inputField);
-                            startBuddySilenceTimer(hasFinal);
-                        } else {
-                            inputField.value = "";
-                        }
-                    }
-                } else if (buddyState === "listening") {
-                    // Continuous conversation: No need to repeat "Hello Buddy"!
-                    let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|हेलो बडी|हेल्लो बडी|\bbuddy\b)/i, "").trim();
+                // 5. Normal Conversational Listening:
+                if (buddyState === "listening") {
+                    let cleanQuery = fullRaw.replace(/.*?(hello buddy|hey buddy|hi buddy|ok buddy|buddy|हेलो बडी|हेल्लो बडी|सुनो बडी|बडी)/i, "").trim();
                     if (!cleanQuery) cleanQuery = fullRaw;
                     cleanQuery = cleanQuery.replace(/^[,\-–—\s]+/, "");
 
                     if (cleanQuery.length > 1) {
+                        // Echo check against last response:
+                        if (isSelfEcho(cleanQuery, lastAssistantResponseText)) {
+                            console.log("[Buddy Voice] Late acoustic echo rejected:", cleanQuery);
+                            return;
+                        }
+
                         const inputField = document.getElementById("user-input");
                         inputField.value = cleanQuery;
                         autoResizeTextarea(inputField);
@@ -3455,13 +3556,13 @@
             };
 
             rec.onend = () => {
-                // Automatically keep recognition alive if voice assistant is still active
-                if (isBuddyModeActive && buddyState !== "speaking") {
-                    try {
-                        rec.start();
-                    } catch (e) {
-                        // Ignore transient start errors
-                    }
+                isRecognitionActive = false;
+                if (isBuddyModeActive) {
+                    setTimeout(() => {
+                        if (isBuddyModeActive && !isRecognitionActive) {
+                            safeStartRecognition();
+                        }
+                    }, 120);
                 }
             };
 
@@ -3523,6 +3624,15 @@
 
         // Initialize on load
         window.addEventListener("DOMContentLoaded", () => {
+            const userInputEl = document.getElementById("user-input");
+            if (userInputEl) {
+                userInputEl.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
             fetchThreadsFromServer();
             fetchIndexedDocuments();
             const input = document.getElementById("user-input");
