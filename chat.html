@@ -1143,7 +1143,7 @@
         }
 
         .welcome-title {
-            font-size: clamp(2.6rem, 5.8vw, 4.2rem);
+            font-size: clamp(2.3rem, 5vw, 3.8rem);
             font-weight: 800;
             letter-spacing: -0.035em;
             color: var(--text-primary);
@@ -1162,7 +1162,7 @@
         }
 
         .welcome-title:hover {
-            transform: translateY(-8px) scale(1.03);
+            transform: translateY(-6px) scale(1.02);
             color: var(--accent-primary);
         }
 
@@ -1185,6 +1185,69 @@
         @keyframes streamCursorBlink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
+        }
+
+        /* Subtle modern subtitle & clean quick-pills to balance empty space */
+        .welcome-subtitle {
+            font-size: 1.02rem;
+            color: var(--text-secondary);
+            margin-top: 14px;
+            margin-bottom: 22px;
+            font-weight: 500;
+            max-width: 580px;
+            line-height: 1.5;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .welcome-subtitle.visible {
+            opacity: 0.9;
+            transform: translateY(0);
+        }
+
+        .welcome-pills-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            max-width: 720px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease 0.15s, transform 0.6s ease 0.15s;
+        }
+
+        .welcome-pills-row.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .welcome-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--theme-pill-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-subtle);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+
+        .welcome-pill:hover {
+            border-color: var(--accent-primary);
+            background: var(--theme-pill-hover-bg, var(--theme-pill-bg));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--border-glow);
+            color: var(--accent-primary);
         }
 
         .starter-grid {
@@ -2605,8 +2668,11 @@
                 return;
             }
             activeThreadId = null;
+            isWelcomeStreaming = false;
             saveThreadsLocally();
             renderSidebarThreads();
+            const chatBox = document.getElementById("chat-box");
+            if (chatBox) chatBox.innerHTML = "";
             renderChatArea();
             const input = document.getElementById("user-input");
             if (input) {
@@ -2748,37 +2814,42 @@
             }).join("");
         }
 
-        let hasStreamedWelcome = false;
         let welcomeStreamTimer = null;
+        let isWelcomeStreaming = false;
 
-        function typeWelcomeTitle() {
+        function typeWelcomeTitle(force = false) {
             const el = document.getElementById("welcome-streaming-title");
             if (!el) return;
+            const subEl = document.getElementById("welcome-sub");
+            const pillsEl = document.getElementById("welcome-pills");
             const fullText = "Welcome to AI Assistant";
+
+            // If already actively streaming the current text and not forced, don't interrupt
+            if (isWelcomeStreaming && !force) return;
 
             if (welcomeStreamTimer) {
                 clearInterval(welcomeStreamTimer);
                 welcomeStreamTimer = null;
             }
 
-            if (hasStreamedWelcome) {
-                el.textContent = fullText;
-                el.classList.add("stream-done");
-                return;
-            }
-
-            hasStreamedWelcome = true;
+            isWelcomeStreaming = true;
             el.textContent = "";
             el.classList.remove("stream-done");
+            if (subEl) subEl.classList.remove("visible");
+            if (pillsEl) pillsEl.classList.remove("visible");
 
             // Deliberate initial pause so cursor blinks cleanly on load, giving an authentic "opening" feel
             setTimeout(() => {
-                if (!el || !document.contains(el)) return;
+                if (!el || !document.contains(el)) {
+                    isWelcomeStreaming = false;
+                    return;
+                }
                 let idx = 0;
                 welcomeStreamTimer = setInterval(() => {
                     if (!el || !document.contains(el)) {
                         clearInterval(welcomeStreamTimer);
                         welcomeStreamTimer = null;
+                        isWelcomeStreaming = false;
                         return;
                     }
                     idx++;
@@ -2786,11 +2857,14 @@
                     if (idx >= fullText.length) {
                         clearInterval(welcomeStreamTimer);
                         welcomeStreamTimer = null;
+                        isWelcomeStreaming = false;
                         setTimeout(() => {
                             if (el) el.classList.add("stream-done");
-                        }, 1000);
+                            if (subEl) subEl.classList.add("visible");
+                            if (pillsEl) pillsEl.classList.add("visible");
+                        }, 500);
                     }
-                }, 90); // 90ms per character: smooth, visible typing pace (~2s total)
+                }, 115); // 115ms per character gives a smooth, deliberate typewriter stream (~2.5s)
             }, 350);
         }
 
@@ -2801,14 +2875,38 @@
 
             if (!thread || !thread.messages || thread.messages.length === 0 || (thread.messages.length === 1 && thread.messages[0].role === "assistant")) {
                 if (titleEl) titleEl.textContent = thread ? thread.title : "New Chat";
-                chatBox.innerHTML = `
-                    <div class="welcome-screen">
-                        <div class="welcome-stream-wrap">
-                            <h2 class="welcome-title streaming-title" id="welcome-streaming-title"></h2>
+                
+                // Only rewrite DOM if chatBox does not already contain the welcome screen
+                const existingTitle = document.getElementById("welcome-streaming-title");
+                if (!existingTitle) {
+                    chatBox.innerHTML = `
+                        <div class="welcome-screen">
+                            <div class="welcome-stream-wrap">
+                                <h2 class="welcome-title streaming-title" id="welcome-streaming-title"></h2>
+                            </div>
+                            <p class="welcome-subtitle" id="welcome-sub">Ask anything about syllabus, exam schedules, or academic holiday calendar</p>
+                            <div class="welcome-pills-row" id="welcome-pills">
+                                <div class="welcome-pill" onclick="askStarter('Show me the 3rd semester subjects and syllabus modules.')">
+                                    <span>📚</span> <span>3rd Sem Syllabus</span>
+                                </div>
+                                <div class="welcome-pill" onclick="askStarter('What are the upcoming college holidays and breaks from the calendar?')">
+                                    <span>📅</span> <span>Holiday Calendar</span>
+                                </div>
+                                <div class="welcome-pill" onclick="askStarter('When are the sessional and semester examinations scheduled?')">
+                                    <span>⏱️</span> <span>Exam Dates</span>
+                                </div>
+                                <div class="welcome-pill" onclick="askStarter('What is the credit scheme and lab requirements for B.Tech?')">
+                                    <span>🎓</span> <span>B.Tech Credits</span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                `;
-                typeWelcomeTitle();
+                    `;
+                    typeWelcomeTitle(true);
+                } else {
+                    if (!isWelcomeStreaming && (!existingTitle.textContent || existingTitle.textContent.length === 0)) {
+                        typeWelcomeTitle(true);
+                    }
+                }
                 return;
             }
 
