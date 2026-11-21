@@ -1187,15 +1187,16 @@
             50% { opacity: 0; }
         }
 
-        /* Subtle modern subtitle & clean quick-pills to balance empty space */
+        /* Subtle modern subtitle */
         .welcome-subtitle {
-            font-size: 1.15rem;
+            font-size: clamp(1.35rem, 2.8vw, 1.75rem);
             color: var(--text-secondary);
-            margin-top: 14px;
-            margin-bottom: 24px;
-            font-weight: 500;
-            max-width: 580px;
-            line-height: 1.5;
+            margin-top: 16px;
+            margin-bottom: 0;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            max-width: 680px;
+            line-height: 1.4;
             min-height: 1.6em;
             display: inline-flex;
             align-items: center;
@@ -1206,61 +1207,17 @@
         .welcome-subtitle.streaming-sub::after {
             content: '';
             display: inline-block;
-            width: 2.5px;
-            height: 1.1em;
+            width: 3px;
+            height: 1.15em;
             background-color: var(--accent-primary);
-            margin-left: 6px;
-            border-radius: 1.5px;
+            margin-left: 8px;
+            border-radius: 2px;
             animation: streamCursorBlink 0.75s infinite;
             vertical-align: middle;
         }
 
         .welcome-subtitle.streaming-sub.stream-done::after {
             display: none;
-        }
-
-        .welcome-pills-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            max-width: 720px;
-            margin: 0 auto;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.6s ease 0.15s, transform 0.6s ease 0.15s;
-        }
-
-        .welcome-pills-row.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .welcome-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 18px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            background: var(--theme-pill-bg);
-            border: 1px solid var(--border-subtle);
-            border-radius: 999px;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            box-shadow: var(--shadow-subtle);
-            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-            user-select: none;
-        }
-
-        .welcome-pill:hover {
-            border-color: var(--accent-primary);
-            background: var(--theme-pill-hover-bg, var(--theme-pill-bg));
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--border-glow);
-            color: var(--accent-primary);
         }
 
         .starter-grid {
@@ -2835,7 +2792,6 @@
             const el = document.getElementById("welcome-streaming-title");
             if (!el) return;
             const subEl = document.getElementById("welcome-sub");
-            const pillsEl = document.getElementById("welcome-pills");
             const titleText = "Welcome to AI Assistant";
             const subText = "How can I help you today?";
 
@@ -2859,7 +2815,6 @@
                 subEl.classList.remove("stream-done");
                 subEl.classList.add("streaming-sub");
             }
-            if (pillsEl) pillsEl.classList.remove("visible");
 
             // Deliberate initial pause so cursor blinks cleanly on load, giving an authentic "opening" feel
             setTimeout(() => {
@@ -2904,8 +2859,7 @@
                                     isWelcomeStreaming = false;
                                     setTimeout(() => {
                                         subEl.classList.add("stream-done");
-                                        if (pillsEl) pillsEl.classList.add("visible");
-                                    }, 400);
+                                    }, 600);
                                 }
                             }, 55); // 55ms per char: conversational, crisp subtitle stream
                         }, 250);
@@ -2931,20 +2885,6 @@
                                 <h2 class="welcome-title streaming-title" id="welcome-streaming-title"></h2>
                             </div>
                             <p class="welcome-subtitle streaming-sub" id="welcome-sub"></p>
-                            <div class="welcome-pills-row" id="welcome-pills">
-                                <div class="welcome-pill" onclick="askStarter('Show me the 3rd semester subjects and syllabus modules.')">
-                                    <span>📚</span> <span>3rd Sem Syllabus</span>
-                                </div>
-                                <div class="welcome-pill" onclick="askStarter('What are the upcoming college holidays and breaks from the calendar?')">
-                                    <span>📅</span> <span>Holiday Calendar</span>
-                                </div>
-                                <div class="welcome-pill" onclick="askStarter('When are the sessional and semester examinations scheduled?')">
-                                    <span>⏱️</span> <span>Exam Dates</span>
-                                </div>
-                                <div class="welcome-pill" onclick="askStarter('What is the credit scheme and lab requirements for B.Tech?')">
-                                    <span>🎓</span> <span>B.Tech Credits</span>
-                                </div>
-                            </div>
                         </div>
                     `;
                     typeWelcomeTitle(true);
